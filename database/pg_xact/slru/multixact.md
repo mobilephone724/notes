@@ -12,12 +12,13 @@
 	* `FOR SHARE` : #TODO
 	* `FOR KEY SHARE` : #TODO 
 
+#TODO  let's see `heapam` first before studying the `multixact`
 ## Low level Design
 ```
 heapam_tuple_delete
-	heapam_tuple_lock_internal
-		heap_lock_tuple
-			if (infomask & HEAP_XMAX_IS_MULTI)
-				GetMultiXactIdMembers
+.   heapam_tuple_lock_internal
+.       heap_lock_tuple
+.           if (infomask & HEAP_XMAX_IS_MULTI)
+                GetMultiXactIdMembers
 		
 ```
