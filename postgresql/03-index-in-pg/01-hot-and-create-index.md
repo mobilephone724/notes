@@ -11,7 +11,7 @@
 # 2 HOT 基础
 简单而言, HOT(Heap Only Tuple) 指没有索引指向的元组，用于消除元组更新引起的索引膨胀，原理如下图：
 
-![image-20240913221635357](01-hot-and-create-index.assets/hot_page.png)
+![image-20240913221635357](./01-hot-and-create-index.assets/001-hot_page.png)
 
 1. 元组指向另一个元组：索引指向 line_ptr_1 ，line_ptr_1 指向 tuple_1 ，tuple_1 被更新后成为 tuple_2，此时 tuple_1 指向 tuple_2，而索引指向的 line pointer 没有发生变化。 
 2. line pointer 也可以指向另一个 line pointer：索引指向 line_ptr_3 , line_ptr_3 指向 line_ptr_4 ，line_ptr_4 指向 tuple3
@@ -21,14 +21,21 @@
 1. 对于被更新的元组，无需创建新的索引指针指向新元组
 2. 旧元组可以被“普通操作”删除掉，并不一定需要 vacuum （相当 vacuum 的工作被分给了普通的 dml ）
 
+
+
+同时，触发 HOT 链也需要严格的限制：
+
+1. 该更新不会修改表的索引所引用的任何列，不包括汇总索引
+2. 包含旧行的页面有足够的空闲空间用于存放更新后的行，即，HOT 链不能跨 page
+
 ## 2-1 HOT 链的构建
 （一）：表 tbl(x int, y int) 在 x 上有索引，先插入一行  tuple_1=(x=1, y=1) ，结果如下
 
-![image-20240912110738151](01-hot-and-create-index.assets/index_insert_1.png)
+![image-20240912110738151](./01-hot-and-create-index.assets/002-hot-insert_1.png)
 
 （二）：当更新 tuple_1 为 (x=1,y=2) 时， 新增 lp_2, 和 tuple_2 ，但是不会新增索引指针，而是由 tuple_1 的 header 会记录 tuple_2 的位置。
 
-![image-20240912111405552](01-hot-and-create-index.assets/index_insert_2.png)
+![image-20240912110738151](./01-hot-and-create-index.assets/003-hot-insert_2.png)
 
 从可见性的角度思考，对于一个快照而言，一个 HOT 链上最多只有一个 tuple 可见。
 
@@ -41,22 +48,19 @@
 
 （三）：再更新 tuple_1 为 tuple3=(x=1, y=3)，结果如下
 
-![image-20240912112236010](01-hot-and-create-index.assets/index_insert_3.png)
+![image-20240912110738151](./01-hot-and-create-index.assets/004-hot-insert_3.png)
 
 ## 2-2 清理
 
 显然如果一个tuple一直被更新，那么其 HOT 链会很长，影响索引搜索的性能，所以需要去清理 HOT 链，清理分为两步，一个是 pruning （修剪），另一个是 defragmentation （碎片整理）
 
-
-
 （四）：pruning （修剪）：等 tuple_1 和 tuple_2 多所有事务都不可见时，则通过修改 line pointers，减少 hot 链的长度。 line pointer 2 可以被其他操作复用，但是 tuple_1 和 tuple_2 占用的空间仍没有被清理。如图：
 
-![image-20240912151435754](01-hot-and-create-index.assets/index_insert_4.png)
-
+![image-20240912151435754](./01-hot-and-create-index.assets/005-hot-prune.png)
 
 （五）：defragmentation （碎片整理）：将对应的 tuple 彻底删除，如图
 
-![image-20240912151740670](01-hot-and-create-index.assets/index_insert_5.png)
+![006-hot-defragmentation](./01-hot-and-create-index.assets/006-hot-defragmentation.png)
 
 # 3 Create Index 的流程
 
@@ -99,6 +103,8 @@
 
 说明该 tuple 被删除了，但是有一些事务仍然对其可见，那么也需要加入到索引中。否则这些事务后续通过当前创建的索引就无法找到该元组。
 
+![007-index-non-hot-dead](./01-hot-and-create-index.assets/007-index-non-hot-dead.png)
+
 注意：在判断一个表有哪些索引时，使用快照是“最新的快照”，而非当前事务的快照。
 
 ### 3-3-1-2 HOT
@@ -117,14 +123,12 @@
 
 
 
-阻止的方式为：pg_index 中有字段 `indcheckxmin` 。当该字段为 true 时，如果想要使用该索引，需要确保自己的 `TransactionXmin` （逻辑）大于 `pg_index`  中对应 tuple 的 `xmin` 
+阻止的方式为：pg_index 中有字段 `indcheckxmin` 。当该字段为 true 时，如果事务 T 想要使用该索引，需要确保自己最旧的快照在创建索引的快照之后，即事物 T 的 `TransactionXmin` （逻辑）大于 `pg_index`  中对应 tuple 的 `xmin` 
 
 1. `TransactionXmin` 表示当前事务的所有快照中，最小的的 xmin。（快照中， `xmin` 前的事务都结束了）
 2. `pg_index`  中对应 tuple 的 `xmin` 表示 该索引创建的 xid
 
-
-
-![image-20240917152125778](./01-hot-and-create-index.assets/indcheckxmin.png)
+![008-indcheckxmin](./01-hot-and-create-index.assets/008-indcheckxmin.png)
 
 
 
@@ -132,11 +136,17 @@
 
 由于创建新索引会导致已有的 HOT 链无效，这里还需讨论如何将已有 HOT 链中元组如何构建到索引中。考虑如下情形，现在需要对 `y` 这一列创建索引，只需要将 tuple_3 加入到索引中(y=2)即可。由于一个 line pointer 只能在一个 HOT 链中，所以此时索引应该指向 lp_1（注意 tuple_1 有 y=1)。
 
-![image-20240912154408429](01-hot-and-create-index.assets/build_on_hot.png)
+![009-index-entry-use-root](./01-hot-and-create-index.assets/009-index-entry-use-root.png)
 
-如果想去“优化“ 新HOT链的长度，让索引指向 lp_2 或者 lp_3，会产生很多问题，例如指向 lp_2，那么此时 tuple_2 还是 heap only tuple 么？
 
-![image-20240912155430901](01-hot-and-create-index.assets/build_on_hot_2.png)
+
+如果想去“优化“ 新HOT链的长度，让索引指向 lp_2 或者 lp_3，会产生很多问题，例如指向 lp_3，如果后续更新 tuple3 为 tuple4(x=1,y=2,z=3)，旧很难清理 HOT 链，
+
+![010-index-entry-not-root_1](./01-hot-and-create-index.assets/010-index-entry-not-root_1.png)
+
+在清理时还需要注意 ptr_3 有索引指向，造成代码复杂度很高
+
+![011-index-entry-not-root_2](./01-hot-and-create-index.assets/011-index-entry-not-root_2.png)
 
 # 4 Create Index Concurrently (CIC) 的原理解析
 * 解决的问题：
@@ -165,9 +175,11 @@
 
 每个连接都会缓存自己 `relcache` 和 `syscache` ，如果没有接收到缓存失效信息，这些缓存会一直保留。一般而言，事务开始时，会处理所有的缓存失效消息，在事务的执行的过程中，也有埋点来处理失效信息。而且，处理结果不会返回给发送端。
 
-![image-20240909222219633](01-hot-and-create-index.assets/empty_index.png)
+所以为了保证其他连接都会看到新索引，简单的想法是：在创建空索引的事务结束后，需要等到当前所有其他事务全部结束，才能开启第二阶段。
 
-所以为了保证其他连接都会看到新索引，简单的想法是：在创建空索引的事务结束后，需要等到当前所有其他事务全部结束，才能开启第二阶段。实际上，代码实现与上述有所差别：
+![012-see-empty-index](./01-hot-and-create-index.assets/012-see-empty-index.png)
+
+实际上，代码实现与上述有所差别：
 
 PostgreSQL 中，还有一处会处理失效信息：当进程执行修改表的操作时，需要打开表获取 `relcache` ，而在打开表操作时，会处理缓存失效信息。打开表获取 relcache ：
 
@@ -180,7 +192,7 @@ relation_open/try_relation_open -> LockRelationOid -> AcceptInvalidationMessages
 1. 此时没有其他事务打开了该表并会能修改：因为 `SharedLock` 仅不与 `select` 、 `select for update/share` 相冲突，与任何修改表的锁相冲突
 2. 后续打开该表的事务，都会处理之前发送的缓存失效信息，可以感知到该空索引
 
-![image-20240917162535429](./01-hot-and-create-index.assets/waitforlockers.png)
+![013-wait-for-lockers](./01-hot-and-create-index.assets/013-wait-for-lockers.png)
 
 具体代码为 lmgr 层的 `WaitForLockers` 函数
 
@@ -211,7 +223,7 @@ WaitForLockers(heaplocktag, ShareLock, true);
 - 在阶段2中，有其他事务将 tuple_2 进行成了 tuple_3 ，将 c 改为了 2。该更新满足 HOT （a, b 都没有变），所以仍在 HOT 链上。但是 tuple_3 对当前快照（CIC）不可见 (in feature)，所以不处理。
 - 在阶段2中，有其他事务将 tuple_3 进行成了 tuple_4，将 b 改为了3。该更新不满足 HOT，所以索引 idx_a 需要创建新的指针
 
-![image-20240912165540880](01-hot-and-create-index.assets/phase2_hot.png)
+![014-cic-phase2-example](./01-hot-and-create-index.assets/014-cic-phase2-example.png)
 
 当索引构建完毕后，将 pg_index 的中对应行的 `indisready` 设置为 true，这样其他事务后续修改表时，会同步修改该索引。和阶段1相似，当前事务提交后，开启新的事物（xact3），等到其他事务都感知到 `indisready=true` 时（同样使用 WaitForLockers 方案），开始阶段三。
 
@@ -225,19 +237,15 @@ WaitForLockers(heaplocktag, ShareLock, true);
 
 举个例子： tuple_3 虽然是在阶段二中新增的 tuple ，但是其根 tuple，即 tuple_1 已经在索引中了，所以在阶段三中忽略。而 tuple_4 不在 HOT 链中，也不在索引中，所以需要插入到索引中。
 
-![image-20240912181510448](01-hot-and-create-index.assets/phase3_hot.png)
+![015-cic-phase3-build](./01-hot-and-create-index.assets/015-cic-phase3-build.png)
 
-增量数据插入结束后，仍不能设置 `indisvalid=true` ：考虑一个元组，它在阶段二中被创建，却在阶段三前被删除，所以此时它仍然不在索引中，但是可能有其他事务（事务 T）可以看到该元组；如果此时修改 `indisvalid=true` 并提交，那么事务 T 使用该索引时，就无法获取到该元组 。故此时需要等事务 T 结束。：
-
-![image-20240912182449902](01-hot-and-create-index.assets/phase3_wait.png)
-
-由于无法确保事务 T 会修改表，所以这里不能使用阶段一中的 `WaitForLockers` 方法，只能等待。
+增量数据插入结束后，仍不能设置 `indisvalid=true` ：考虑一个元组，它在阶段二中被创建，却在阶段三前被删除，所以此时该元组仍然不在索引中，但是可能有其他事务（事务 T）可以看到该元组，故此时需要等事务 T 结束。由于无法确保事务 T 会修改表，所以这里不能使用阶段一中的 `WaitForLockers` 方法，只能等待。
 
 
 
 所以流程为将增量数据插入元组后，获取当前快照的 xmin，记为 xminlimit，并提交。之后开启新的事物，等待所有含有 `snap.xmin<xminlimit` 的快照的事务全部提交，再设置 `indisvalid=true` 并提交。
 
-![image-20240912184735020](01-hot-and-create-index.assets/phase3_wait_2.png)
+![016-cic-phase3-wait](./01-hot-and-create-index.assets/016-cic-phase3-wait.png)
 
 
 
@@ -247,40 +255,31 @@ WaitForLockers(heaplocktag, ShareLock, true);
 
 ## 4-3 FAQ
 
-### 4-3-1 indisready 的进一步目的
-
-问题：为什么需要确保阶段二中，没有连接会破坏 HOT
-
-举个例子：
-
-![image-20240917163429882](./01-hot-and-create-index.assets/faq_1.png)
-
-阶段三中，tuple_2 已经被加入到了 b=1 的索引指针中，导致索引错乱
-
-
-
-
-
-### 4-3-2 unique index
+### 4-3-1 unique index
 
 问题：创建 unique index 时，阶段二和阶段三的两次插入，会引起 unique index 的冲突？
 
-举例1：表有 a,b,c 三个字段，其中 a 上有索引
 
-1. tuple_1(1,1,1) 在阶段二中被加入到索引中。
-2. 在阶段二中，有其他事务将 tuple_1 更新为了 tuple_2(2,1,1)
-3. 在阶段三中，将 tuple_2 插入到索引中时，因为 tuple_1 已经被删除，所以不会引起冲突，该情况和一般的索引插入相同：
 
-![image-20240917173051951](./01-hot-and-create-index.assets/faq_2_1.png)
+unique 冲突都是在各自索引的 `aminsert` 中实现的，只有 btree 实现了 unique 特性
 
-举例2：表有 a,b,c 三个字段，其中 a 上有索引
+ 举例1：表有 a,b 三个字段，其中 a 上有索引
 
-1. tuple_1(1,1,1) 在阶段二中被加入到索引中。
-2. 在阶段二中，有其他事务将 tuple_1 更新为了 tuple_2(2,1,1)
-3. 在阶段三中，有其他事务将 tuple_2 更新为了 tuple_3(3,1,1)，而此时执行 CIC 的事务快照只能看见 tuple_2
+1. tuple_1(1,1) 在阶段二中被加入到索引中。
+2. 在阶段二中，有其他事务将 tuple_1 更新为了 tuple_2(2,1)
+3. 在阶段三中，将 tuple_2 插入到索引中时，索引发现 tuple_1 可能，使用 `SNAPSHOT_DIRTY` 看 tuple_1 ，发现 tuple_1 已经被删除，所以实际上没有冲突，该情况和一般的索引插入相同：
+
+![017-cic-unique-check_1](./01-hot-and-create-index.assets/017-cic-unique-check_1.png)
+
+
+
+举例2：表有 a,b 三个字段，其中 a 上有索引
+
+1. tuple_1(1,1) 在阶段二中被加入到索引中。
+2. 在阶段二中，有其他事务将 tuple_1 更新为了 tuple_2(2,1)
+3. 在阶段三中，有其他事务将 tuple_2 更新为了 tuple_3(3,1)，而此时执行 CIC 的事务快照只能看见 tuple_2
 4. 在阶段三中，将 tuple_2 插入到索引中时：
-   1. tuple_1 已经被删除，所以不会引起冲突
-   2. tuple_3 发现冲突，此时再检查 tuple_2 （即将要插入的元组），发现 tuple_2 已经被删除，（使用 snapshot_self），故插入失败，但不报错。
+   1. 发现 tuple_1 可能有冲突，使用 `SNAPSHOT_DIRTY` 看 tuple_1 ，发现 tuple_1 已经被删除，所以实际上没有冲突
+   2. 发现 tuple_3 可能有冲突，使用 `SNAPSHOT_DIRTY` 看 tuple_3 ，发现 tuple_3 没有删除，此时再使用 `SNAPSHOT_SELF` 看  tuple_2 （即将要插入的元组），发现 tuple_2 已经被删除，故插入失败，但不报错。
 
-![image-20240917173005173](./01-hot-and-create-index.assets/faq_2_2.png)
-
+![018-cic-unique-check_2](./01-hot-and-create-index.assets/018-cic-unique-check_2.png)
