@@ -7,13 +7,21 @@ This repo is copied from my hugo blog. It takes much time to maintain that since
 
 So just keeping these posts readable in github with markdown format seems a good choice.
 
+The format of the repo:
+1. Every new notes **must** be prefixed with a 4-length serial number generated from `./nextd.sh`
+2. New assets **must** be in the `/assets` directory and prefixed like `${4-length notes prefixed}-${3-length image prefixed}-xxx.suffix`
+
+# TODO
+- [ ] Relationship storage in Neo4j
+
+
 # Top Five Newest
 ```
-./0013-postgresql/0016-hashjoin.md
-./0013-postgresql/0017-pgvector.md
-./0013-postgresql/0015-every_data_pg.md
-./0013-postgresql/0014-column-schema-change.md
-./0013-postgresql/0024-index-in-pg/0024-hot-and-create-index.md
+./0010-paper_reading/0026-20years-database.md
+./0013-postgresql/0013-build_from_source.md
+./0010-paper_reading/0010-constant_recovery.md
+./0000-computer_science/0006-linux-file.md
+./0000-computer_science/0003-google-f1.md
 ```
 
 # Directory Tree
@@ -31,7 +39,8 @@ So just keeping these posts readable in github with markdown format seems a good
 ├── 0010-paper_reading
 │   ├── 0010-constant_recovery.md
 │   ├── 0011-roaring-bitmap.md
-│   └── 0012-mesi.md
+│   ├── 0012-mesi.md
+│   └── 0026-20years-database.md
 ├── 0013-postgresql
 │   ├── 0013-build_from_source.md
 │   ├── 0014-column-schema-change.md
@@ -49,8 +58,9 @@ So just keeping these posts readable in github with markdown format seems a good
 │   │   └── 0023-wal-insert.md
 │   └── 0024-index-in-pg
 │       └── 0024-hot-and-create-index.md
+├── assets
 └── readme.md
 
-7 directories, 25 files
+8 directories, 26 files
 ```
 

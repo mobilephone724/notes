@@ -7,3 +7,11 @@ This repo is copied from my hugo blog. It takes much time to maintain that since
 
 So just keeping these posts readable in github with markdown format seems a good choice.
 
+The format of the repo:
+1. Every new notes **must** be prefixed with a 4-length serial number generated from `./nextd.sh`
+2. New assets **must** be in the `/assets` directory and prefixed like `${4-length notes prefixed}-${3-length image prefixed}-xxx.suffix`
+
+# TODO
+- [ ] Relationship storage in Neo4j
+
+
