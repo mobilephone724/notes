@@ -1,0 +1,4 @@
+[submodule ".obsidian"]
+	path = .obsidian
+	url = git@github.com:mobilephone724/obsidian_in_notes.git
+	ignore = all
