@@ -141,7 +141,7 @@ some caveats
 
 how we chose the BUFFSIZE value?
 
-![image-20210517160118314](./0006-linux-file.assets/Screenshot-2021-05-04-19-58-12.2024_02_12_1707675786.png)
+![image-20210517160118314](../assets/0006-002-Screenshot-2021-05-04-19-58-12.2024_02_12_1707675786.png)
 
 ## file sharing
 
@@ -157,7 +157,7 @@ The kernel uses three data structures to represent an open file, and the relatio
    2. The current file offset
    3. A pointer to the v-node table entry for the file
 3. Each open file (or device) has a **v-node structure that contains information about the type of file and pointers to functions that operate on the file**. For most files, the v-node also contains the **`i-node` for the file**. This information is read from disk when the file is opened, so that all the **pertinent information** about the file is readily available. For example, the `i-node` contains the owner of the file, the size of the file, pointers to where the actual data blocks for the file are located on disk, and so on
-![file](./0006-linux-file.assets/file.2024_02_12_1707675802.png)
+![file](../assets/0006-001-file.2024_02_12_1707675802.png)
 
 If two independent processes have the same file open, we could have the arrangement
 
@@ -199,7 +199,7 @@ int dup2(int fd, int fd2);
 ```
 With dup2, we specify the value of the new descriptor with the fd2 argument. If fd2 is already open, it is first closed. If fd equals fd2, then dup2 returns fd2 without closing it. Otherwise, the FD_CLOEXEC file descriptor flag is cleared for fd2, so that fd2 is left open if the process calls exec
 
-![image-20210517160118314](./0006-linux-file.assets/Screenshot-2021-05-05-09-34-21.2024_02_12_1707675820.png)
+![image-20210517160118314](../assets/0006-003-Screenshot-2021-05-05-09-34-21.2024_02_12_1707675820.png)
 
 ## `sync`,`fsync` , and `fdatasync` function
 

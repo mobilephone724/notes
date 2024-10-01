@@ -29,7 +29,7 @@ There is a simple optimization that we can build the hash table in the first bat
 
 ### parallel one-pass hash join
 
-![parallel_one-pass_hash_join](./0016-hashjoin.assets/parallel_one-pass_hash_join.2024_02_12_1707674700.svg)
+![parallel_one-pass_hash_join](../assets/0016-001-parallel_one-pass_hash_join.2024_02_12_1707674700.svg)
 
 With parallel workers, we can
 
@@ -46,7 +46,7 @@ Although in most cases, the neck of tp system is disk io, but parallel workers c
 
 ### parallel two-pass hash join
 
-![parallel_two-pass_hash_join](./0016-hashjoin.assets/parallel_two-pass_hash_join.2024_02_12_1707674716.svg)
+![parallel_two-pass_hash_join](../assets/0016-002-parallel_two-pass_hash_join.2024_02_12_1707674716.svg)
 
 Same as the basic two-pass hash join, parallel workers build batches parallelly, both in reading from inner/outer tuple and writing data to tmp file. Since no worker can obtain a whole batch's data in the first scan, the technique described above can be used here.
 

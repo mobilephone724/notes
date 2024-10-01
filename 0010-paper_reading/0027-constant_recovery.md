@@ -18,7 +18,7 @@ This paper describes the overall design of “**Constant Time Recovery**” (CTR
 
 **Following ARIES**, the SQL Server recovery process has three distinct phases. Figure 2 demonstrates these phases and the portion of the log they process.
 
-![Untitled](./0010-constant_recovery.assets/Untitled.2024_08_08_1723123875.png)
+![Untitled](../assets/0027-002-Untitled.2024_08_08_1723123875.png)
 
 (The oldest transaction can run across many checkpoints)
 
@@ -41,7 +41,7 @@ Versioning is performed at the row level: for every user data update, **SQL Serv
 
 The versions are linked to each other using their physical locator
 
-![image-20240808213734702](./0010-constant_recovery.assets/image-20240808213734702.2024_08_08_1723124263.png)
+![image-20240808213734702](../assets/0027-001-image-20240808213734702.2024_08_08_1723124263.png)
 
 Given that these versions are only used for the purposes of SI, the version store doesn’t need to be preserved across restarts and is stored in SQL Server’s “TempDB”, a system database that is recycled every time the SQL Server process restarts. This allows for efficient version generation, as these operations are not logged.
 

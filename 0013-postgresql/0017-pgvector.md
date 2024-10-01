@@ -38,15 +38,15 @@ reference [k-means clustering - Wikipedia](https://en.wikipedia.org/wiki/K-means
 算法目标：选取K个中心点，使得数据集中的所有点到其最近的中心点“距离”之和最近，以平方和距离为例：
 
 Given a set of observations $(x_1, x_2, \dots, x_n)$, where each observation is a $d$-dimensional real vector, k-means clustering aims to partition the $n$ observations into $k$ ($\leq n$) sets $S = {S_1, S_2, \dot, S_k}$ so as to minimize the within-cluster sum of squares (WCSS). Formally, the objective is to find:
-![](0017-pgvector.assets/kmeans_target.2024_02_12_1707672348.png)
+![](../assets/0017-009-kmeans_target.2024_02_12_1707672348.png)
 算法过程：
 **我们可以很容易的证明目标函数是关于$S$的凸函数**
 Given an initial set of $k$ means $m_1^{1}, \dots , m_k^{(1)}$ (see below), the algorithm proceeds by alternating between two steps:
 
-1. **Assignment step**: Assign each observation to the cluster with the nearest mean: ![](0017-pgvector.assets/kmean_assign_step.2024_02_12_1707672359.png)
+1. **Assignment step**: Assign each observation to the cluster with the nearest mean: ![](../assets/0017-008-kmean_assign_step.2024_02_12_1707672359.png)
    
     where each $x_p$is assigned to exactly one $S^{t}$, even if it could be assigned to two or more of them.
-2. **Update step**: Recalculate means ([centroids](https://en.wikipedia.org/wiki/Centroids "Centroids")) for observations assigned to each cluster.![](0017-pgvector.assets/kmeans_update_step.2024_02_12_1707672369.png)
+2. **Update step**: Recalculate means ([centroids](https://en.wikipedia.org/wiki/Centroids "Centroids")) for observations assigned to each cluster.![](../assets/0017-010-kmeans_update_step.2024_02_12_1707672369.png)
 #### kmeans 优化篇
 上述算法虽然简洁，但计算上复杂度高。在pgvector的IVFFlat实现中，使用了一些优化算法，主要是如下两篇论文：
 * Using Triangle Inequality: 使用三角不等式减少两点间距离的计算次数
@@ -79,7 +79,7 @@ Given an initial set of $k$ means $m_1^{1}, \dots , m_k^{(1)}$ (see below), the 
 ### 实现介绍
 
 ##### page representation
-![](0017-pgvector.assets/IVF-pages-represent.2024_02_12_1707672384.png)
+![](../assets/0017-007-IVF-pages-represent.2024_02_12_1707672384.png)
 
 #### Key functions
 
@@ -231,7 +231,7 @@ HNSW 算法主要包括以下几个步骤
         * 维护一个图中距点$p$最近的点集合$S$，依次从候选点集合$C$中选取一个元素$c$：如果$c$的邻居$neighbor(c)$比$S$中距$p$最远的点$s$距$p$更近，即$d(neighbor(c), p) < d(s,c)$ ，则用$neighbor(c)$替换集合$S$中的点$s$，并将$s$加入到候选集合$C$中。重复以上步骤直到$|c| = 0$ 
     * 从高层图向底层图搜索，使用高层图的结果$S$作为低层图$S$和$C$的初始值。
 
-![](0017-pgvector.assets/illustration-of-HNSW.2024_02_12_1707672400.png)
+![](../assets/0017-005-illustration-of-HNSW.2024_02_12_1707672400.png)
 ### 算法介绍
 
 一下顺序只是为了便于理解，不代表论文发布顺序。更多细节可参考论文。
@@ -374,7 +374,7 @@ return closest_points
 ### PGVECTOR中的算法实现
 #### INSERT
 
-![](0017-pgvector.assets/HNSW_INSERT_ALGORITH.2024_02_12_1707672412.png)
+![](../assets/0017-001-HNSW_INSERT_ALGORITH.2024_02_12_1707672412.png)
 ``` HnswInsertElement
 /*
  * Algorithm 1 from paper: update graph by inserting an element
@@ -422,7 +422,7 @@ HnswInsertElement(HnswElement element, HnswElement entryPoint,
 ```
 
 #### search layer
-![](0017-pgvector.assets/HNSW_SEARCH_LAYER_ALGORITHM.2024_02_12_1707672421.png)
+![](../assets/0017-003-HNSW_SEARCH_LAYER_ALGORITHM.2024_02_12_1707672421.png)
 ```
 /*
  * Algorithm 2 from paper: search this layer with specifiyed enter points to
@@ -492,7 +492,7 @@ HnswSearchLayer(Datum q, List *ep, int ef, int lc, Relation index,
 * random_select($\mathrm{log} n$) select_min($\mathrm{log} n$) 
 * delete_min($\mathrm{log} n$)
 #### select neighbors
-![](0017-pgvector.assets/HNSW_SELECT_NEIGHBORS_ALGORITHMS.2024_02_12_1707672431.png)
+![](../assets/0017-004-HNSW_SELECT_NEIGHBORS_ALGORITHMS.2024_02_12_1707672431.png)
 
 ```SelectNeighbors
 /*
@@ -576,20 +576,20 @@ typedef struct HnswNeighborArray
 
 ### page representation
 
-![image-20231007080940352](0017-pgvector.assets/HNSW_PAGE_REPRESENTATION.2024_02_12_1707672445.png)
-![](0017-pgvector.assets/PGVEC-HNSW-PAGE.2024_02_12_1707672457.png)
+![image-20231007080940352](../assets/0017-002-HNSW_PAGE_REPRESENTATION.2024_02_12_1707672445.png)
+![](../assets/0017-011-PGVEC-HNSW-PAGE.2024_02_12_1707672457.png)
 
 ## vector database 调研
 
 ### qdrant
 
-![image-20231007080940352](0017-pgvector.assets/vector-database.2024_02_12_1707672561.png)
+![image-20231007080940352](../assets/0017-012-vector-database.2024_02_12_1707672561.png)
 
 > Vector databases are optimized for **storing** and **querying** these high-dimensional vectors efficiently, and they often using specialized data structures and indexing techniques such as Hierarchical Navigable Small World (HNSW) – which is used to implement Approximate Nearest Neighbors – and Product Quantization, among others.
 
 
 
-![image-20231007081700863](0017-pgvector.assets/image-20231007081700863.2024_02_12_1707672473.png)
+![image-20231007081700863](../assets/0017-006-image-20231007081700863.2024_02_12_1707672473.png)
 
 
 
