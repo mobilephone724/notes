@@ -16,8 +16,8 @@ Bare bitmap can cost much memory according to the total substantial data size, e
    - [[blog of charlieroro] roaring bitmaps](https://www.cnblogs.com/charlieroro/p/17919505.html)
    - [【木东居士】：不深入而浅出 Roaring Bitmaps 的基本原理](https://cloud.tencent.com/developer/article/1136054)
 -  paper 
-   - Introduction: [0011-010-Better bitmap performance with Roaring bitmaps.pdf](../assets/0011-010-Better%20bitmap%20performance%20with%20Roaring%20bitmaps.pdf)
-   - Opitmazition: [0011-011-Consistently faster and smaller compressed bitmaps with Roaring.pdf](../assets/0011-011-Consistently%20faster%20and%20smaller%20compressed%20bitmaps%20with%20Roaring.pdf)
+   - Introduction: [0011-010-Better bitmap performance with Roaring bitmaps.pdf](assets/0011-010-Better%20bitmap%20performance%20with%20Roaring%20bitmaps.pdf)
+   - Opitmazition: [0011-011-Consistently faster and smaller compressed bitmaps with Roaring.pdf](assets/0011-011-Consistently%20faster%20and%20smaller%20compressed%20bitmaps%20with%20Roaring.pdf)
 
 ## 0x2 Introduction TO Roaring Bitmap
 
@@ -31,7 +31,7 @@ When a chunk contains no more than 4096 integers, we use a sorted array of packe
 
 **Since the size of a chunk is up to 8KB, we may save much memoy if the cardinality is small. Don't worry about the memory allocator, it can deal with the small memory with local buffer. And I believe it's the most important meaning of two types of containers.**
 
-![image.png](../assets/0011-006-1714232020698-852891d5-53e1-4073-bf38-3b9f2fffc95d.2024_05_07_1715087143.png)
+![image.png](assets/0011-006-1714232020698-852891d5-53e1-4073-bf38-3b9f2fffc95d.2024_05_07_1715087143.png)
 
 ### 0x22 conversion between the two types of container
 
@@ -48,9 +48,9 @@ When a chunk contains no more than 4096 integers, we use a sorted array of packe
 - Converting an array container to a bitmap container is done by creating a new bitmap container initialized with zeros, and setting the corresponding bits.
 - To convert a bitmap container to an array container, we extract the location of the set bits using an optimized algorithm
 
-![image.png](../assets/0011-001-1714140703751-4816ae74-12dc-4eab-b499-ed1f786bf183.2024_05_07_1715087159-20240921135601371.png)
+![image.png](assets/0011-001-1714140703751-4816ae74-12dc-4eab-b499-ed1f786bf183.2024_05_07_1715087159-20240921135601371.png)
 
-![image.png](../assets/0011-002-xxxxx.png)
+![image.png](assets/0011-002-xxxxx.png)
 
 ### 0x23 index array
 
@@ -58,7 +58,7 @@ To check for the presence of a 32-bit integer x, we first seek the container cor
 
 > The containers are stored in a dynamic array with the shared 16 most-significant bits: this serves as a first-level index. The array keeps the containers sorted by the 16 most-significant bits.
 
-![image.png](../assets/0011-003-1714140793688-826bb436-f90a-4730-b85d-8cee646a7106.2024_05_07_1715087229.png)
+![image.png](assets/0011-003-1714140793688-826bb436-f90a-4730-b85d-8cee646a7106.2024_05_07_1715087229.png)
 
 ## 0x3 set operations
 
@@ -71,7 +71,7 @@ There are
 
 **union operation**(**the result must be a bitmap container**) **:**
 
-![image.png](../assets/0011-004-1714140807012-1c9706c2-b1bb-4aab-b2b9-0aa1bcb2f030.2024_05_07_1715087239.png)
+![image.png](assets/0011-004-1714140807012-1c9706c2-b1bb-4aab-b2b9-0aa1bcb2f030.2024_05_07_1715087239.png)
 It might seem like computing bitwise ORs and computing the cardinality of the result
 
 would be significantly slower than merely computing the bitwise ORs. However, four factors mitigate this potential problem
@@ -171,11 +171,11 @@ For array containers, we count this number by iterating through the 16-bit integ
 
 For bitmap containers, the below algorithm shows how to compute the number of runs. 
 
-![image.png](../assets/0011-007-1714233519262-51a9cc7f-f364-4657-a05f-144704e3e8cf.2024_05_07_1715087279.png)
+![image.png](assets/0011-007-1714233519262-51a9cc7f-f364-4657-a05f-144704e3e8cf.2024_05_07_1715087279.png)
 
 We can illustrate the core operation of the algorithm using a single 32-bit word containing 6 runs of consecutive ones:
 
-![image.png](../assets/0011-008-1714234212202-1054aa9f-0e10-4459-a1da-790390a81620.2024_05_07_1715087290.png)
+![image.png](assets/0011-008-1714234212202-1054aa9f-0e10-4459-a1da-790390a81620.2024_05_07_1715087290.png)
 
 - We can verify that $\mathrm{bitCount}((C_i \ll 1)\ \mathrm{ANDNOT}\ C_i) = 6$, that is, we have effectively computed the number of runs.  ($a\ \mathrm{ANDNOT}\ b$is true iff a=1 and b=0)
 - In the case where a run continues up to the left-most bit, and does not continue in the next word, it does not get counted, but we add another term (($C_i \gg 63$) ANDNOT $C_i+1$ when using 64-bit words) to check for this case.
@@ -184,7 +184,7 @@ Nevertheless, the computation may be expensive—exceeding the cost of computing
 
 There are several method to implement the heuristic algorithm, and see the paper for details.
 
-![image.png](../assets/0011-009-1715086504011-260c924d-1b54-4c71-8070-e876236e8d5c.2024_05_07_1715087301.png)
+![image.png](assets/0011-009-1715086504011-260c924d-1b54-4c71-8070-e876236e8d5c.2024_05_07_1715087301.png)
 
 ### 0x44 Logical operations
 
@@ -215,5 +215,5 @@ The most significant bit of each word distinguishes between fill and literal wor
 **Concise** is a variation that reduces the memory usage when the bitmap is _moderately sparse. _Instead of storing the run length using $W − 2$ bits, Concise uses only $W − 2 − \lceil log2(W )\rceil$ bits to indicate a run length $r$, reserving $\lceil log2(W )\rceil$ bits to store a value $p$. When $p$ is non-zero, we decode $r$ fill words, plus a single $W − 1$ bit word with its $p^{th}$ bit flipped.
 
 Below is an example:
-![image.png](../assets/0011-005-1714231195835-441ff581-5a2b-49ad-b454-d875cbf5c3ae.2024_05_07_1715087318.png)
+![image.png](assets/0011-005-1714231195835-441ff581-5a2b-49ad-b454-d875cbf5c3ae.2024_05_07_1715087318.png)
 

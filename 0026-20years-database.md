@@ -329,6 +329,6 @@ Blockchain proponents make additional meaningless claims of achieving data resil
 - We contend that the database community should strive for a POSIX-like standard of DBMS internals to accelerate interoperability.
 
 # Related Paper
-* [amazon-dynamo-sosp2007](../assets/0026-002-amazon-dynamo-sosp2007.pdf)
-* [whatgoesaround-sigmodrec2024](../assets/0026-001-whatgoesaround-sigmodrec2024.pdf)
+* [amazon-dynamo-sosp2007](assets/0026-002-amazon-dynamo-sosp2007.pdf)
+* [whatgoesaround-sigmodrec2024](assets/0026-001-whatgoesaround-sigmodrec2024.pdf)
 

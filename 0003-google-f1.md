@@ -40,7 +40,7 @@ The main features of F1 that impact schema changes are:
 + No global membership:
   + no reliable mechanism for determining currently running F1 servers, and explicit **global synchronization is not possible**
 
-![image-20230814210030515](../assets/0003-001-google-f1-arch.2024_02_12_1707671860.png)
+![image-20230814210030515](assets/0003-001-google-f1-arch.2024_02_12_1707671860.png)
 
 several constraints on the schema change process:
 
@@ -127,8 +127,8 @@ enables distributed schema changes in a way that
   + the name of the column whose value is stored in the pair
 + Although this appears to needlessly repeat all primary key values in the key for each column value, in practice, **F1’s physical storage format eliminates this redundancy**
 
-![](../assets/0003-002-google-f1-relational-representation.2024_02_12_1707672029.png)
-![](../assets/0003-003-google-f1-kv-representation.2024_02_12_1707672075.png)
+![](assets/0003-002-google-f1-relational-representation.2024_02_12_1707672029.png)
+![](assets/0003-003-google-f1-kv-representation.2024_02_12_1707672075.png)
 
 + A secondary index
   + covers a **non-empty subset of columns** on a table

@@ -28,5 +28,5 @@ Before illustrate the situation where interpreting the binary data with two diff
 
 
 
-![image-20240407223441847](../assets/0014-001-image-20240407223441847.2024_04_07_1712500481.png)
+![image-20240407223441847](assets/0014-001-image-20240407223441847.2024_04_07_1712500481.png)
 
