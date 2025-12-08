@@ -1,0 +1,17 @@
+site_name: mobilephone724 # 网页左上角显示的名称
+site_url: https://mobilephone724.github.io/notes # 选填，填上有助于SEO
+
+theme:
+  name: material # 使用最流行的 Material 主题，简洁美观
+  language: zh # 设置语言为中文
+  features:
+    - navigation.expand # 默认展开左侧导航
+    - navigation.indexes # 允许文件夹作为索引页
+    - content.math
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
