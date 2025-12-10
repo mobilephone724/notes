@@ -1,0 +1,2358 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="mobilephone724">
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0000-computer_science/0007-zero2rsa/">
+      
+      
+        <link rel="prev" href="../0006-linux-file/">
+      
+      
+        <link rel="next" href="../0008-reversed_inode/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>ZERO TO RSA - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#0rsa" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ZERO TO RSA
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0rsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        从0证明RSA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        费马小定理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="费马小定理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        引理1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        证明费马小定理
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        模逆元
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="模逆元">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        引理2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        证明模逆元
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        中国剩余定理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        欧拉公式
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="欧拉公式">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        性质
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        欧拉定理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="欧拉定理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        欧拉定理的证明
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RSA算法
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RSA算法">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法证明
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="算法证明">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        通常情况
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        特殊情况
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0011-roaring-bitmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0012-mesi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0027-constant_recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0017-pgvector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0024-index-in-pg/0025-hot-and-create-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0031-learn_rust/0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0rsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        从0证明RSA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        费马小定理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="费马小定理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        引理1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        证明费马小定理
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        模逆元
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="模逆元">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        引理2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        证明模逆元
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        中国剩余定理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        欧拉公式
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="欧拉公式">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        性质
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        欧拉定理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="欧拉定理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        简介
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        欧拉定理的证明
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RSA算法
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RSA算法">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法证明
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="算法证明">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        通常情况
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        特殊情况
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>ZERO TO RSA</h1>
+
+<h2 id="0rsa">从0证明RSA</h2>
+<p>RSA 算法（即一个非对称加密算法）除了应用非常广泛外，其特性也非常吸引人（起码非常吸引我）。我在网上找了很多关于RSA的证明，要么不够详细（例如缺失对前置定理的证明），要么需要引出较多复杂的数论概念。作者本身水平不高，试图绕过这些复杂的概念，从初等数学的开始，完备地证明RSA。</p>
+<p>关于RSA的背景知识可能很多，可以慢慢阅读，我在此尝试从初等数学开始证明。这些背景知识的证明有一定的顺序，如果读者发现某个证明看不懂，可以向前翻阅。</p>
+<p>参考的文章如下：（因为参考的文章太多，大概率不全）</p>
+<ul>
+<li><a href="https://zh.wikipedia.org/wiki/%E8%B4%B9%E9%A9%AC%E5%B0%8F%E5%AE%9A%E7%90%86">费马小定理</a></li>
+<li><a href="https://zh.wikipedia.org/wiki/%E4%B8%AD%E5%9B%BD%E5%89%A9%E4%BD%99%E5%AE%9A%E7%90%86">中国剩余定理</a></li>
+<li><a href="https://www.ruanyifeng.com/blog/2013/07/rsa_algorithm_part_two.html">阮一峰的博客——RSA算法原理（一）</a></li>
+<li><a href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">阮一峰的博客——RSA算法原理（二）</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/35060143">初等数论笔记Part 1： 欧拉定理</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/100587745">算法学习笔记(9)：逆元</a></li>
+</ul>
+<h2 id="_1">费马小定理</h2>
+<h3 id="_2">简介</h3>
+<p>如果 <span class="arithmatex">\(p\)</span> 是质数且 <span class="arithmatex">\(\mathrm{gcd}(a,p)=1\)</span> , 那么 <span class="arithmatex">\(a^{p-1}\equiv 1\ (\mathrm{mod}\ p)\)</span></p>
+<p>在证明该定理前，先证明一个简单的引理</p>
+<h3 id="1">引理1</h3>
+<p>如果 <span class="arithmatex">\(p\)</span> 是质数，且 <span class="arithmatex">\(\mathrm{gcd}(a,p)=1\)</span> , 那么</p>
+<div class="arithmatex">\[
+\lbrace ka \ \mathrm{mod}\ p | k = \lbrace 1,2,...,p -1 \rbrace \rbrace= \lbrace 1,2,3,...,p-1 \rbrace
+\]</div>
+<p>即二者存在一对一的关系。由于这两个集合的元素个数相同，所以只要证明左侧集合没有重复元素即可</p>
+<p>证明：假设存在 <span class="arithmatex">\(k_1\)</span> 和 <span class="arithmatex">\(k_2\)</span> 满足 <span class="arithmatex">\(1 \leq k_1 &lt; k_2 \leq p-1\)</span> ，且 <span class="arithmatex">\(k_1a\ \mathrm{mod}\ p = k_2a\ \mathrm{mod}\ p\)</span> . 那么可知</p>
+<div class="arithmatex">\[
+(k_1+p-k_2)a\ \mathrm{mod}\ p = pa\ \mathrm{mod}\ p=0
+\]</div>
+<p>即 <span class="arithmatex">\((k_1+p-k_2)a\ \mathrm{mod}\ p=0\)</span> 。由于 <span class="arithmatex">\(p\)</span> 是质数，那么 <span class="arithmatex">\((k_1+p-k_2)a\)</span> 一定是 <span class="arithmatex">\(p\)</span>​​ 的倍数，这显然不可能。</p>
+<h3 id="_3">证明费马小定理</h3>
+<div class="arithmatex">\[
+\begin{align}
+(1a)(2a)(3a)...((p-1)a)\ \mathrm{mod}\ p &amp;= (a^{p-1}(p-1)!)\ \mathrm{mod}\ p \newline
+(1a\ \mathrm{mod}\ p)(2a\ \mathrm{mod}\ p)...((p-1)a\ \mathrm{mod}\ p) &amp;=  (a^{p-1}(p-1)!)\ \mathrm{mod}\ p\newline
+(p-1)! &amp;= (a^{p-1}(p-1)!)\ \mathrm{mod}\ p
+\end{align}
+\]</div>
+<p>整理得 <span class="arithmatex">\(a^{p-1}\equiv 1\ (\mathrm{mod}\ p)\)</span>​</p>
+<h2 id="_4">模逆元</h2>
+<h3 id="_5">简介</h3>
+<p>定义： <span class="arithmatex">\(a\)</span> 对 <span class="arithmatex">\(n\)</span> 的<strong>模逆元</strong>是满足 <span class="arithmatex">\(ab\equiv 1\ (\mathrm{mod}\ n)\)</span> 的 <span class="arithmatex">\(b\)</span>​</p>
+<p><strong>模逆元的存在性</strong>：模逆元存在的充要条件是 <span class="arithmatex">\(\mathrm{gcd}(a,n)=1\)</span>​</p>
+<p>为证明该存在性定理，需要先证明引理2</p>
+<h3 id="2">引理2</h3>
+<p>若 <span class="arithmatex">\(\mathrm{gcd}(a,n)=g\)</span> ，则存在 <span class="arithmatex">\(x,y\in Z\)</span>，满足 <span class="arithmatex">\(ax+ny=g\)</span></p>
+<p>证明：</p>
+<ul>
+<li>设集合 $S=\lbrace ax+ny|x,y\in Z \rbrace $，显然，存在 <span class="arithmatex">\(s\in S\)</span> 并且 <span class="arithmatex">\(s&gt;0\)</span></li>
+<li>设 <span class="arithmatex">\(d\)</span> 为 <span class="arithmatex">\(S\)</span> 中最小的，大于 <span class="arithmatex">\(0\)</span> 的元素</li>
+<li>若 <span class="arithmatex">\(a\ \mathrm{mod}\ p\neq 0\)</span> ，则存在 <span class="arithmatex">\(k,r\)</span> 满足 <span class="arithmatex">\(a=kd+r\)</span> ，其中 <span class="arithmatex">\(0 &lt; r &lt; k\)</span> ，带入 <span class="arithmatex">\(d=ax_0+ny_0\)</span> ，得到 <span class="arithmatex">\(r=a(1-kx_0)+n(-ky_0)\)</span> 。 显然 <span class="arithmatex">\(r\in S\)</span> ，又 <span class="arithmatex">\(0 &lt; r &lt; k\)</span> ，这与 <span class="arithmatex">\(d\)</span> 为 <span class="arithmatex">\(S\)</span> 中最小的大于 <span class="arithmatex">\(0\)</span> 的假设不符。</li>
+<li>故 <span class="arithmatex">\(a\ \mathrm{mod}\ d=0\)</span> ，同理 <span class="arithmatex">\(n\ \mathrm{mod}\ d=0\)</span></li>
+<li>所以 <span class="arithmatex">\(d\)</span> 为 <span class="arithmatex">\(a\)</span> 和 <span class="arithmatex">\(n\)</span> 共同的因数。设 <span class="arithmatex">\(g=ld\)</span> ， <span class="arithmatex">\(l\geq0\)</span> 且 <span class="arithmatex">\(l\in Z\)</span> ，那么有 <span class="arithmatex">\(g=ld=a(lx_0)+n(ly_0)\)</span> 。</li>
+</ul>
+<h3 id="_6">证明模逆元</h3>
+<p>现在证明模逆元</p>
+<p>充分性</p>
+<ul>
+<li>已知 <span class="arithmatex">\(\mathrm{gcd}(a,n)=1\)</span> ，则有 <span class="arithmatex">\(1=ax_0+ny_0\)</span></li>
+<li>$(ax_0+ny_0)\ \mathrm{mod}\ n = ax_0 \ \mathrm{mod}\ n $​</li>
+<li><span class="arithmatex">\((ax_0+ny_0)\ \mathrm{mod}\ n= 1 \ \mathrm{mod}\ n=1\)</span></li>
+<li>故 <span class="arithmatex">\(ax_0 \ \mathrm{mod}\ n=1\)</span> 即 <span class="arithmatex">\(ax_0\ \equiv 1\ (\mathrm{mod}\ n)\)</span> ， <span class="arithmatex">\(b=x_0\)</span></li>
+</ul>
+<p>必要性：</p>
+<ul>
+<li>已经存在 <span class="arithmatex">\(b\)</span> 满足 <span class="arithmatex">\(ab\ \equiv 1\ (\mathrm{mod}\ n)\)</span>​</li>
+<li>则存在 <span class="arithmatex">\(y,k\)</span> 满足 <span class="arithmatex">\((ab+ny)\ \mathrm{mod}\ n=1\)</span></li>
+<li>则存在 <span class="arithmatex">\(k\)</span> 满足 <span class="arithmatex">\(ab+ny-1=kn\)</span></li>
+<li>即 <span class="arithmatex">\(ab + n(y-k)=1\)</span></li>
+<li>根据<strong>引理2</strong>，有 <span class="arithmatex">\(\mathrm{gcd}(a,n)\leq 1\)</span> ，显然只有 <span class="arithmatex">\(\mathrm{gcd}(a,n)=1\)</span></li>
+</ul>
+<h2 id="_7">中国剩余定理</h2>
+<p>方程组</p>
+<div class="arithmatex">\[
+\begin{equation}
+\begin{cases}
+x\ \equiv a_1\ (\mathrm{mod}\ m_1)\newline
+x\ \equiv a_2\ (\mathrm{mod}\ m_2)\newline
+...\newline
+x\ \equiv a_n\ (\mathrm{mod}\ m_n)\newline
+\end{cases}
+\end{equation}
+\]</div>
+<p>其中对于任意 <span class="arithmatex">\(i\neq j\)</span> 有 <span class="arithmatex">\(\mathrm{gcd}(m_i,m_j)=1\)</span> ，对于任意 <span class="arithmatex">\(a_1,a_2,...,a_n\)</span> 有解。</p>
+<p>证明：如下</p>
+<p>存在性</p>
+<ul>
+<li>令 <span class="arithmatex">\(M=m_1m_2,...m_n=\prod\limits_{i=1}^{n}m_i\)</span>， <span class="arithmatex">\(M_i=M/m_i\)</span></li>
+<li>显然有 <span class="arithmatex">\(\mathrm{gcd}(M_i,m_i)=1\)</span> ，故存在 <span class="arithmatex">\(t_i\)</span> 满足 <span class="arithmatex">\(M_it_i\ \equiv 1\ (\mathrm{mod}\ m_i)\)</span></li>
+<li>故对于 <span class="arithmatex">\(x\ \equiv a_1\ (\mathrm{mod}\ m_1)\)</span> ，有 <span class="arithmatex">\(a_iM_it_i\ \equiv a_i\ (\mathrm{mod}\ m_i)\)</span></li>
+<li>故可得 <span class="arithmatex">\(x\)</span> 的一个解 <span class="arithmatex">\(x=\sum\limits_{i=1}^{n}a_iM_it_i\)</span></li>
+</ul>
+<p>完备性</p>
+<ul>
+<li>若 <span class="arithmatex">\(x_1,x_2\)</span> 都是方程组的解，那么对于任意 <span class="arithmatex">\(i\in \lbrace 1,2,...,n \rbrace\)</span> ，有 <span class="arithmatex">\((x_1-x_2)\ \mathrm{mod}\ m_i=0\)</span></li>
+<li>故 <span class="arithmatex">\(x_1-x_2=kM\)</span></li>
+<li>所以通解为 <span class="arithmatex">\({kM+}\sum\limits_{i=1}^{n}a_iM_it_i\)</span></li>
+</ul>
+<h2 id="_8">欧拉公式</h2>
+<h3 id="_9">简介</h3>
+<ul>
+<li>函数 <span class="arithmatex">\(\phi(n)\)</span> 为 <span class="arithmatex">\(\lbrace 1,2,...,n \rbrace\)</span> 中和 <span class="arithmatex">\(n\)</span> 互质的数的数量</li>
+<li>例如 <span class="arithmatex">\(\phi(8)=4\)</span> ，因为 <span class="arithmatex">\(\mathrm{gcd}(\lbrace 1,3,5,7 \rbrace,4)=1\)</span></li>
+</ul>
+<h3 id="_10">性质</h3>
+<p><strong>（性质1）</strong></p>
+<p>对于质数 <span class="arithmatex">\(n\)</span> ，有 <span class="arithmatex">\(\phi(n)=n-1\)</span></p>
+<p><strong>（性质2）</strong></p>
+<p>若存在质数 <span class="arithmatex">\(p\)</span> 满足 <span class="arithmatex">\(n=p^k\)</span> ，则 <span class="arithmatex">\(\phi(n)=p^k-p^k/p=n(1-1/p)\)</span> 。思路为 <span class="arithmatex">\(\lbrace 1,2,...,n \rbrace\)</span> 中除去 <span class="arithmatex">\(p\)</span> 的倍数</p>
+<p><strong>（性质3）</strong></p>
+<p>若 <span class="arithmatex">\(\mathrm{gcd}(m,n)=1\)</span> ，则 <span class="arithmatex">\(\phi(mn)=\phi(m)\phi(n)\)</span> ​。证明如下：</p>
+<ul>
+<li>对于任意 <span class="arithmatex">\(0 &lt; N &lt; mn\)</span> ，有 <span class="arithmatex">\(N=k_1m+p=k_2n+q\)</span> 。假设 <span class="arithmatex">\(N\)</span> 满足 <span class="arithmatex">\(\mathrm{gcd}(N,mn)=1\)</span></li>
+<li>显然， <span class="arithmatex">\(\mathrm{gcd}(N,m)=1\)</span> ，故 <span class="arithmatex">\(\mathrm{gcd}(k_1m+p,m)=1\)</span> ，显然 <span class="arithmatex">\(\mathrm{gcd}(p,m)=1\)</span> 。同理 <span class="arithmatex">\(\mathrm{gcd}(q,n)\)</span> 。</li>
+<li>对于方程组</li>
+</ul>
+<div class="arithmatex">\[
+\begin{equation}
+\begin{cases}
+N\ \equiv p\ (\mathrm{mod}\ m)\newline
+N\ \equiv q\ (\mathrm{mod}\ n)
+\end{cases}
+\end{equation}
+\]</div>
+<p>根据中国剩余定理，有解 <span class="arithmatex">\(N=kmn+t_ppn+t_qqm\)</span> 。</p>
+<p>每有一组 <span class="arithmatex">\((p,q)\)</span> ，该方程组就有一个解。注意 <span class="arithmatex">\(\mathrm{gcd}(p,m)=1\)</span> ,且 <span class="arithmatex">\(\mathrm{gcd}(q,n)\)</span> 。</p>
+<p><strong>（性质4）</strong></p>
+<p>对于 <span class="arithmatex">\(n=\prod\limits_{i=1}^rp_i^{k_i}\)</span> ，有 <span class="arithmatex">\(\phi(n)=\phi(\prod\limits_{i=1}^rp_i^{k_i})=\prod\limits_{i=1}^r\phi(p_i^{k_i})=\prod\limits_{i=1}^r(n(1-1/p_i))=n^r\prod\limits_{i=1}^r(1-1/p_i)\)</span></p>
+<h2 id="_11">欧拉定理</h2>
+<h3 id="_12">简介</h3>
+<p>若 <span class="arithmatex">\(n,a\)</span> 为正整数，且 <span class="arithmatex">\(\mathrm{gcd}(n,a)=1\)</span> 则 <span class="arithmatex">\(a^{\phi(n)}\ \equiv 1\ (\mathrm{mod}\ n)\)</span>​</p>
+<h3 id="_13">欧拉定理的证明</h3>
+<p>设 <span class="arithmatex">\(\Phi(n)=\lbrace c_1,c_2,...,c_{\phi(n)} \rbrace\)</span> 为小于 <span class="arithmatex">\(n\)</span> 且与 <span class="arithmatex">\(n\)</span> 互质的数的集合，即 <span class="arithmatex">\(\mathrm{gcd}(c_i,n)=1\)</span>。</p>
+<p>若 <span class="arithmatex">\(\mathrm{gcd}(a,n)=1\)</span> ，考虑集合 <span class="arithmatex">\(\Phi_a(n)=\lbrace (ac_1)\ \mathrm{mod}\ n,(ac_2)\ \mathrm{mod}\ n,...,(ac_{\phi(n)})\ \mathrm{mod}\ n \rbrace\)</span> 。我们证明 <span class="arithmatex">\(\Phi(n)=\Phi_a(n)\)</span></p>
+<p>先证明 <span class="arithmatex">\(\Phi_a(n)\)</span> 中没有重复的元素，若 <span class="arithmatex">\(ac_i\ \equiv ac_j\ (\mathrm{mod}\ n)\)</span> ,则 <span class="arithmatex">\(c_i\ \equiv c_j\ (\mathrm{mod}\ n)\)</span> ，这显然错误。</p>
+<p>再证明 <span class="arithmatex">\(\mathrm{gcd}(ac_i\ \mathrm{mod}\ n, n)=1\)</span> 。设 <span class="arithmatex">\(ac_i=k_in+r_i\)</span> ，若 <span class="arithmatex">\(\mathrm{gcd}(r_i,n)=g\)</span> ，则 <span class="arithmatex">\(ac_i=g(k_i(n/g)+(r_i/g))\)</span> 。等式右侧是 <span class="arithmatex">\(g\)</span> 的倍数，而左侧显然不是（ <span class="arithmatex">\(a\)</span> 和 <span class="arithmatex">\(c\)</span> 都与 <span class="arithmatex">\(n\)</span> 互质）</p>
+<p>所以：</p>
+<div class="arithmatex">\[
+\prod\limits_{i=1}^{\phi(n)}c_i \ \equiv \prod\limits_{i=1}^{\phi(n)}c_ia(\ \mathrm{mod}\ n)
+\]</div>
+<p>即</p>
+<div class="arithmatex">\[
+\prod\limits_{i=1}^{\phi(n)}c_i \ \equiv a^{\phi(n)}\prod\limits_{i=1}^{\phi(n)}c_i(\ \mathrm{mod}\ n)
+\]</div>
+<p>显然 <span class="arithmatex">\(\mathrm{gcd}(\prod\limits_{i=1}^{\phi(n)}c_i,n)=1\)</span></p>
+<p>故</p>
+<div class="arithmatex">\[
+a^{\phi(n)}\ \equiv 1\ (\mathrm{mod}\ n)
+\]</div>
+<h2 id="rsa">RSA算法</h2>
+<h3 id="_14">算法流程</h3>
+<ol>
+<li>生成秘钥</li>
+<li>选择连个大质数 <span class="arithmatex">\(p\)</span> 和 <span class="arithmatex">\(q\)</span> ，计算 <span class="arithmatex">\(n=p * q\)</span> </li>
+<li>计算 <span class="arithmatex">\(\phi(n)=(p-1)(q-1)\)</span> </li>
+<li>选择正整数 <span class="arithmatex">\(e\)</span> 满足 <span class="arithmatex">\(1 &lt; e &lt; \phi(n)\)</span> ，且 <span class="arithmatex">\(\mathrm{gcd}(e,\phi(n))=1\)</span></li>
+<li>计算 <span class="arithmatex">\(e\)</span> 对 <span class="arithmatex">\(\phi(n)\)</span> 的模逆元 <span class="arithmatex">\(d\)</span> ，即 <span class="arithmatex">\(ed\ \equiv 1\ (\mathrm{mod}\ \phi(n))\)</span></li>
+<li>得到公钥对 <span class="arithmatex">\((n,e)\)</span> ，私钥对 <span class="arithmatex">\((n, d)\)</span></li>
+<li>加密</li>
+<li>加密的数为 <span class="arithmatex">\(m\)</span> ，满足 <span class="arithmatex">\(0\leq m &lt; n\)</span></li>
+<li>计算 <span class="arithmatex">\(c=m^e\ \mathrm{mod}\ n\)</span> ，则 <span class="arithmatex">\(c\)</span> 就是密文</li>
+<li>解密</li>
+<li><span class="arithmatex">\(m=c^d\ \mathrm{mod}\ n\)</span></li>
+</ol>
+<h3 id="_15">算法证明</h3>
+<p>显然，核心点在于证明 <span class="arithmatex">\(m=c^d\ \mathrm{mod}\ n\)</span>​ 。</p>
+<p>简答化简可得， <span class="arithmatex">\(c^d\ \mathrm{mod}\ n=(m^e\ \mathrm{mod}\ n)^d\ \mathrm{mod}\ n=m^{ed}\ \mathrm{mod}\ n\)</span>​</p>
+<p>根据 <span class="arithmatex">\(ed\ \equiv 1\ (\mathrm{mod}\ \phi(n))\)</span> ，可知存在 <span class="arithmatex">\(k\)</span> 使得 <span class="arithmatex">\(ed=k\phi(n)+1\)</span> ，带入 <span class="arithmatex">\(m^{ed}\ \mathrm{mod}\ n\)</span> 得，</p>
+<div class="arithmatex">\[
+\begin{align}
+m^{ed}\ \mathrm{mod}\ n&amp;= m^{k\phi(n)+1}\ \mathrm{mod}\ n \newline
+                       &amp;= ((m^{\phi(n)} \mathrm{mod}\ n)^k*(m\ \mathrm{mod}\ n))\ \mathrm{mod}\ n \newline
+                       &amp;= (m(m^{\phi(n)} \mathrm{mod}\ n)^k) \ \mathrm{mod}\ n
+\end{align}
+\]</div>
+<h4 id="_16">通常情况</h4>
+<p>当 <span class="arithmatex">\(\mathrm{gcd}(m,n)=1\)</span> 时（即 <span class="arithmatex">\(m\neq hp\)</span> 且 <span class="arithmatex">\(m\neq hq\)</span> 时），根据欧拉定理 <span class="arithmatex">\(m^{\phi(n)}\ \equiv 1\ (\mathrm{mod}\ n)\)</span> ，可知 <span class="arithmatex">\(m^{\phi(n)} \mathrm{mod}\ n=1\)</span>​</p>
+<p>则 <span class="arithmatex">\(m^{ed}\ \mathrm{mod}\ n = m\ \mathrm{mod}\ n=m\)</span> </p>
+<h4 id="_17">特殊情况</h4>
+<p>当 <span class="arithmatex">\(m=hp\)</span> 时，（ <span class="arithmatex">\(m=hq\)</span> 同理）有 <span class="arithmatex">\(m^{\phi(n)} \mathrm{mod}\ n = (hp)^{(p-1)(q-1)}\mathrm{mod}\ pq\)</span></p>
+<p>而因为 <span class="arithmatex">\(q\)</span> 是质数，根据费马小定理，有 <span class="arithmatex">\(((hp)^{k(p-1)})^{q-1}\ \equiv 1\ (\mathrm{mod}\ q)\)</span> 。故</p>
+<div class="arithmatex">\[
+\begin{align}
+((hp)^{k(p-1)})^{q-1}hp\ &amp;\equiv hp\ (\mathrm{mod}\ q) \newline
+(hp)^{k(p-1)(q-1)+1}\ &amp;\equiv hp\ (\mathrm{mod}\ q) \newline
+(hp)^{(cd)}\ &amp;\equiv hp\ (\mathrm{mod}\ q)
+\end{align}
+\]</div>
+<p>故存在 <span class="arithmatex">\(t\)</span> 满足</p>
+<div class="arithmatex">\[
+(hp)^{ed}=tq+hp
+\]</div>
+<p>注意，等式左侧是 <span class="arithmatex">\(p\)</span> 的倍数，而 <span class="arithmatex">\(p\)</span> 是质数，故 <span class="arithmatex">\(t\)</span> 必定是 <span class="arithmatex">\(p\)</span> 的倍数，设 <span class="arithmatex">\(t=t'p\)</span> ，则</p>
+<div class="arithmatex">\[
+\begin{align}
+(hp)^{ed}&amp;=t'pq+hp=t'n+hp \newline
+m^{ed}\ &amp;\equiv m\ (\mathrm{mod}\ n) \newline
+m^{ed-1} \ &amp;\equiv 1\ (\mathrm{mod}\ n) \newline
+m^{k\phi(n)} \ &amp;\equiv 1\ (\mathrm{mod}\ n)
+\end{align}
+\]</div>
+<p>同理 <span class="arithmatex">\(m^{ed}\ \mathrm{mod}\ n = (m(m^{\phi(n)} \mathrm{mod}\ n)^k) \ \mathrm{mod}\ n = m\ \mathrm{mod}\ n=m\)</span></p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
