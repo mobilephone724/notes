@@ -10,6 +10,11 @@ theme:
     - content.math
 
 markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true # 允许锚定行号
+      line_spans: __span   # 启用行范围高亮
+      pygments_lang_class: true # 确保语言类名正确
+  - pymdownx.superfences: {} # 增强的代码围栏支持
   - pymdownx.arithmatex:
       generic: true
 
