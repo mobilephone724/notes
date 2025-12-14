@@ -1,0 +1,3311 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="mobilephone724">
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0013-postgresql/0017-pgvector/">
+      
+      
+        <link rel="prev" href="../0016-hashjoin/">
+      
+      
+        <link rel="next" href="../0018-sequence_type/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>PGVECTOR AND VECTOR DATABASE - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              PGVECTOR AND VECTOR DATABASE
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0007-zero2rsa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0011-roaring-bitmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0012-mesi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0027-constant_recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        序言
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ivfflat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IVFFlat
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IVFFlat">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        概览
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法介绍
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="算法介绍">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kmeans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基础算法kmeans
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmeans_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kmeans 优化篇
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kmeans 优化篇">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-triangle-inequality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Triangle Inequality
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmeans_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KMeans++
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实现介绍
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="实现介绍">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#page-representation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        page representation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#index-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        index build
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="index build">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        计算中心点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        构建元信息页
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        构建中心点页
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        构建数据页
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        index scan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="index scan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#begin-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        begin scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-tupele" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get tupele
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hnsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HNSW
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HNSW">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        概览
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法介绍
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="算法介绍">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nsw-hnsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NSW —— HNSW的起源?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NSW —— HNSW的起源?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NSW的构建
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nsw_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NSW的搜索
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hnsw-nsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HNSW —— NSW的进化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pgvector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PGVECTOR中的算法实现
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PGVECTOR中的算法实现">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#insert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        INSERT
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        search layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="search layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pairing-heap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pairing heap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#select-neighbors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        select neighbors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        data structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="data structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        底层实现中的问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-representation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        page representation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vector-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vector database 调研
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vector database 调研">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qdrant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        qdrant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="qdrant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法与存储
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        附录
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="附录">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trianlge-inequality-kmeans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trianlge-inequality-Kmeans
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knuths-algorithm-s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        采样算法 Knuth's algorithm S
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        后记
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0024-index-in-pg/0025-hot-and-create-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0031-learn_rust/0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        序言
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ivfflat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IVFFlat
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IVFFlat">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        概览
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法介绍
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="算法介绍">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kmeans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        基础算法kmeans
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmeans_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kmeans 优化篇
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kmeans 优化篇">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-triangle-inequality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Triangle Inequality
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kmeans_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KMeans++
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实现介绍
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="实现介绍">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#page-representation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        page representation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#index-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        index build
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="index build">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        计算中心点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        构建元信息页
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        构建中心点页
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        构建数据页
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        index scan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="index scan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#begin-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        begin scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-tupele" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get tupele
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hnsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HNSW
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HNSW">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        概览
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法介绍
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="算法介绍">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nsw-hnsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NSW —— HNSW的起源?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NSW —— HNSW的起源?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NSW的构建
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nsw_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NSW的搜索
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hnsw-nsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HNSW —— NSW的进化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pgvector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PGVECTOR中的算法实现
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PGVECTOR中的算法实现">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#insert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        INSERT
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        search layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="search layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pairing-heap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pairing heap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#select-neighbors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        select neighbors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        data structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="data structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        底层实现中的问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-representation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        page representation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vector-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vector database 调研
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vector database 调研">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qdrant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        qdrant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="qdrant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        算法与存储
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        附录
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="附录">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trianlge-inequality-kmeans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trianlge-inequality-Kmeans
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knuths-algorithm-s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        采样算法 Knuth's algorithm S
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        后记
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>PGVECTOR AND VECTOR DATABASE</h1>
+
+<h2 id="_1">序言</h2>
+<p><code>pgvector</code>是一个向量搜索（根据近似度）的插件，用来加速AKNN（approximate nearest neighbor）。
+<code>PASE</code>中提到，向量ANN算法包括4类
+1. tree-based algorithms
+    1. KD-Tree
+    2. RTree
+2. quantization-based algorithms
+    1. IVFFlat
+    2. IVFADC
+    3. IMI
+3. graph based algorithms
+    1. HNSW
+    2. NSG
+    3. SSG
+4. hash-base algorithms
+    1. LSH
+    <code>pgvector</code> 包括两个算法，<code>IVFFlat</code> 和 <code>HNSW</code>，后续内容将以这两个算法的内容及其实现展开。</p>
+<h2 id="ivfflat">IVFFlat</h2>
+<h3 id="_2">概览</h3>
+<p>IVFFlat 算法主要包括以下几个步骤
++ 索引构建阶段
+    + 使用 <code>KMeans</code> 将数据集划分成多个簇(cluster)
++ 查询阶段
+    + 通过每个簇的中心点（向量是高维的点）获取N个最近的簇
+    + 遍历这N个簇的所有点，从中找到最近的K个点</p>
+<h3 id="_3">算法介绍</h3>
+<h4 id="kmeans">基础算法kmeans</h4>
+<p>reference <a href="https://en.wikipedia.org/wiki/K-means_clustering">k-means clustering - Wikipedia</a>
+算法目标：选取K个中心点，使得数据集中的所有点到其最近的中心点“距离”之和最近，以平方和距离为例：</p>
+<p>Given a set of observations <span class="arithmatex">\((x_1, x_2, \dots, x_n)\)</span>, where each observation is a <span class="arithmatex">\(d\)</span>-dimensional real vector, k-means clustering aims to partition the <span class="arithmatex">\(n\)</span> observations into <span class="arithmatex">\(k\)</span> (<span class="arithmatex">\(\leq n\)</span>) sets <span class="arithmatex">\(S = {S_1, S_2, \dot, S_k}\)</span> so as to minimize the within-cluster sum of squares (WCSS). Formally, the objective is to find:
+<img alt="" src="../../assets/0017-009-kmeans_target.2024_02_12_1707672348.png" />
+算法过程：
+<strong>我们可以很容易的证明目标函数是关于<span class="arithmatex">\(S\)</span>的凸函数</strong>
+Given an initial set of <span class="arithmatex">\(k\)</span> means <span class="arithmatex">\(m_1^{1}, \dots , m_k^{(1)}\)</span> (see below), the algorithm proceeds by alternating between two steps:</p>
+<ol>
+<li>
+<p><strong>Assignment step</strong>: Assign each observation to the cluster with the nearest mean: <img alt="" src="../../assets/0017-008-kmean_assign_step.2024_02_12_1707672359.png" /></p>
+<p>where each <span class="arithmatex">\(x_p\)</span>is assigned to exactly one <span class="arithmatex">\(S^{t}\)</span>, even if it could be assigned to two or more of them.
+2. <strong>Update step</strong>: Recalculate means (<a href="https://en.wikipedia.org/wiki/Centroids" title="Centroids">centroids</a>) for observations assigned to each cluster.<img alt="" src="../../assets/0017-010-kmeans_update_step.2024_02_12_1707672369.png" /></p>
+<h4 id="kmeans_1">kmeans 优化篇</h4>
+<p>上述算法虽然简洁，但计算上复杂度高。在pgvector的IVFFlat实现中，使用了一些优化算法，主要是如下两篇论文：
+* Using Triangle Inequality: 使用三角不等式减少两点间距离的计算次数
+* KMeans++ :使用随机点的选取技巧来提高收敛速度和准确率
+<a href="https://cdn.aaai.org/ICML/2003/ICML03-022.pdf">Using the Triangle Inequality to Accelerate k-Means (aaai.org)</a>
+<a href="https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf">kMeansPP-soda.pdf (stanford.edu)</a></p>
+<h5 id="using-triangle-inequality">Using Triangle Inequality</h5>
+<p>思路：
+1. 在高维向量中，计算一次两点之间的距离的代价较高。
+2. 根据一些朴素的思想，假如使用的距离函数满足三角不等式<span class="arithmatex">\(d(a,b) \leq d(a,c) + d(b,c)\)</span>，那么在一次<code>kmeams</code>迭代中，如果点 <code>x</code> 距其中心点 <code>c(x)</code> 的距离很近，而 <code>c(x)</code> 距另一个中心点 <code>c(y)</code> 的距离很远，那么<code>c(y)</code>必然不是<code>x</code> 的中心点，这样就可以避免一次计算。</p>
+</li>
+</ol>
+<p>根据三角不等式可以推出
+1. Let <code>x</code> be a point and let <code>b</code> and <code>c</code> be centers. If <span class="arithmatex">\(d(b, c) &gt; 2d(x,b)\)</span>, then <span class="arithmatex">\(d(x,c) \geq d(x,b)\)</span>
+2. Let <code>x</code> be a point and let <code>b</code> and <code>c</code> be centers, then <span class="arithmatex">\(d(x,c) \geq \mathrm{max} \{0,d(x,b)-d(b,c)\}\)</span> </p>
+<p>根据上述定理，在Kmeans迭代期间，维护一些状态，即可减少计算量
+过程如</p>
+<p><a href="#trianlge-inequality-Kmeans">使用三角不等式优化Kmeans</a></p>
+<h5 id="kmeans_2">KMeans++</h5>
+<p>论文中的数学分析很多，其主要目的为：通过在初始化的时候选取恰当的中心点，减少迭代次数。方法为：
+假设向量的全集为<span class="arithmatex">\(X=\{x_1,x_2,\dots,x_n\}\subset \mathbb{R}^d\)</span>  ,<span class="arithmatex">\(D(x)\)</span> 表示点 <span class="arithmatex">\(x\)</span> 到其当前中心点的距离</p>
+<ol>
+<li>从<span class="arithmatex">\(X\)</span> 中随机选择一个点<span class="arithmatex">\(c_1\)</span> </li>
+<li>以<span class="arithmatex">\(\frac{D(x')}{\sum_{x\in X}D(x)}\)</span> 的概率选择<span class="arithmatex">\(x'\)</span>为<span class="arithmatex">\(c_i\)</span></li>
+<li>重复上一步直到我们选择了 <span class="arithmatex">\(k\)</span> 个中心点，</li>
+<li>使用标准的k-means算法进行后续处理</li>
+</ol>
+<h3 id="_4">实现介绍</h3>
+<h5 id="page-representation">page representation</h5>
+<p><img alt="" src="../../assets/0017-007-IVF-pages-represent.2024_02_12_1707672384.png" /></p>
+<h4 id="key-functions">Key functions</h4>
+<h5 id="index-build">index build</h5>
+<p>索引构建分为以下几个步骤</p>
+<ol>
+<li>计算中心点</li>
+<li>构建元信息页（'meta page'）</li>
+<li>构建中心点页（'centerid pages'）</li>
+<li>构建数据页（'data pages'）</li>
+</ol>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ivfflatbuild
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    BuildIndex
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        InitBuildState
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        ComputeCenters
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        CreateMetaPage
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        CreateListPages
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        CreateEntryPages
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        FreeBuildState
+</span></code></pre></div>
+<h6 id="_5">计算中心点</h6>
+<ol>
+<li>实现上，没有扫描所有的行以计算中心点，而是“采样”一些<code>block</code>。<ol>
+<li>会选择<span class="arithmatex">\(ncenter \times 50\)</span> 作为采样<code>block</code>的数量</li>
+<li></li>
+</ol>
+</li>
+</ol>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ComputeCenters
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    SampleRows
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        /* The number of target samples is the number of centers times 50 */
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        numSamples = buildstate-&gt;lists * 50;
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        buildstate-&gt;samples = VectorArrayInit(numSamples, buildstate-&gt;dimensions);
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        BlockSampler_Init
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>            &gt; provides algorithm for block level sampling of a relation as discussed on
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>              pgsql-hackers 2004-04-02 (subject &quot;Large DB&quot;)
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>              Since we know the total number of blocks in advance, we can use the straightforward
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>              Algorithm S from Knuth 3.4.2, rather than Vitter&#39;s algorithm.
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        reservoir_init_selection_state
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        while (BlockSampler_HasMore(&amp;buildstate-&gt;bs))
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>        table_index_build_range_scan: callback=SampleCallback
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    IvfflatKmeans # Do as kmeans algrithm
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        if (samples-&gt;length &lt;= centers-&gt;maxlen)
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>            QuickCenters(index, samples, centers);
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        else
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>            ElkanKmeans(index, samples, centers);
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>SampleCallback
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    AddSample
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        if (samples-&gt;length &lt; targsamples)
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>            VectorArraySet
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        else
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>            if (buildstate-&gt;rowstoskip &lt; 0)
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>                rowstoskip = reservoir_get_next_S #skip some future samples
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>            else
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>                k = sampler_random_fract
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>                VectorArraySet  # replace a old with this one randomly
+</span></code></pre></div>
+<h6 id="_6">构建元信息页</h6>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>CreateMetaPage # info about meta information
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    IvfflatNewBuffer
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    IvfflatInitRegisterPage
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    IvfflatCommitBuffer
+</span></code></pre></div>
+<h6 id="_7">构建中心点页</h6>
+<p>当一个页的剩余空间不够时，使用字段<code>nextblkno</code>指向下一个页
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>typedef struct IvfflatPageOpaqueData
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    BlockNumber nextblkno;
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    uint16      unused;
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    uint16      page_id;        /* for identification of IVFFlat indexes */
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>}           IvfflatPageOpaqueData;
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>CreateListPages # info about center infomation
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    foreach sampled vector
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        if (PageGetFreeSpace &lt; listSize) # we need more free space to store the vector 
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>            IvfflatAppendPage
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>                newbuf = IvfflatNewBuffer
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>                newpage = GenericXLogRegisterBuffer
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>                IvfflatPageGetOpaque
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>                old_page-&gt;next = this_page
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>                IvfflatInitPage
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>        PageAddItem # copy this point to the page
+</span></code></pre></div></p>
+<h6 id="_8">构建数据页</h6>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>CreateEntryPages # omit parallel optimization here
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    AssignTuples # Scan table for tuples to index
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    tuplesort_performsort
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    InsertTuples
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        for (int i = 0; i &lt; buildstate-&gt;centers-&gt;length; i++)
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>            buf = IvfflatNewBuffer(index, forkNum); # add new page for each data page list
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>            startPage = BufferGetBlockNumber(buf);  # the first page number
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>            foreach tuple in this list:
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>                if (PageGetFreeSpace(page) &lt; itemsz) # append page
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>                    IvfflatAppendPage(index, &amp;buf, &amp;page, &amp;state, forkNum);
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>                PageAddItem()
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>            IvfflatUpdateList(); # update the first page record of the center page
+</span></code></pre></div>
+<h5 id="index-scan">index scan</h5>
+<h6 id="begin-scan">begin scan</h6>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ivfflatbeginscan
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    IvfflatGetMetaPageInfo(index, &amp;lists, &amp;dimensions);  # Get lists and dimensions from metapage
+</span></code></pre></div>
+<h6 id="get-tupele">get tupele</h6>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ivfflatgettuple
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    if (first) # try to get the first tuple
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>        GetScanLists # find &#39;probe&#39; centers that are closest
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>            while (BlockNumberIsValid(nextblkno)) # search all list pages
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>                if (distance &lt; maxDistance) # omit probe here for easier understanding
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>                    scanlist = (IvfflatScanList *) pairingheap_remove_first(so-&gt;listQueue);
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>                    pairingheap_add(so-&gt;listQueue, &amp;scanlist-&gt;ph_node);
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>                    maxDistance = ((IvfflatScanList *) pairingheap_first(so-&gt;listQueue))-&gt;distance;
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        GetScanItems # find closest items in the above centers
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>            while (!pairingheap_is_empty(so-&gt;listQueue)) # for each center
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>                while (BlockNumberIsValid(searchPage)) # for each block in the data list
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>                    foreach (tuple)
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>                        tuplesort_puttupleslot
+</span></code></pre></div>
+<h2 id="hnsw">HNSW</h2>
+<h3 id="_9">概览</h3>
+<p>HNSW 算法主要包括以下几个步骤
+* 索引构建
+    * 构建层级邻近图
+        * 每一层都是邻近图 —— 每个点都记录它最近的几个点
+        * 高一层的图是低一层图的缩略图 —— 只有低一层图的部分点 ——，最低一层的图有全部点的信息。
+* 查询阶段，对于目标点<span class="arithmatex">\(p\)</span>
+    * 对于每一层图：
+        * 维护一个图中距点<span class="arithmatex">\(p\)</span>最近的点集合<span class="arithmatex">\(S\)</span>，依次从候选点集合<span class="arithmatex">\(C\)</span>中选取一个元素<span class="arithmatex">\(c\)</span>：如果<span class="arithmatex">\(c\)</span>的邻居<span class="arithmatex">\(neighbor(c)\)</span>比<span class="arithmatex">\(S\)</span>中距<span class="arithmatex">\(p\)</span>最远的点<span class="arithmatex">\(s\)</span>距<span class="arithmatex">\(p\)</span>更近，即<span class="arithmatex">\(d(neighbor(c), p) &lt; d(s,c)\)</span> ，则用<span class="arithmatex">\(neighbor(c)\)</span>替换集合<span class="arithmatex">\(S\)</span>中的点<span class="arithmatex">\(s\)</span>，并将<span class="arithmatex">\(s\)</span>加入到候选集合<span class="arithmatex">\(C\)</span>中。重复以上步骤直到<span class="arithmatex">\(|c| = 0\)</span> 
+    * 从高层图向底层图搜索，使用高层图的结果<span class="arithmatex">\(S\)</span>作为低层图<span class="arithmatex">\(S\)</span>和<span class="arithmatex">\(C\)</span>的初始值。</p>
+<p><img alt="" src="../../assets/0017-005-illustration-of-HNSW.2024_02_12_1707672400.png" /></p>
+<h3 id="_10">算法介绍</h3>
+<p>一下顺序只是为了便于理解，不代表论文发布顺序。更多细节可参考论文。</p>
+<h4 id="nsw-hnsw">NSW —— HNSW的起源?</h4>
+<p>NSW可以视为邻近图，每个点维护至多<span class="arithmatex">\(K\)</span>个距离其最近的点，此时HNSW退化为只有一层的特殊情况。</p>
+<h5 id="nsw">NSW的构建</h5>
+<p>构建NSW的算法如下（此处忽略边角情况以方便理解
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>INPUT: a set of points S
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>OUTPUT: graph G
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>BUILD_LAYER(S)
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>G = []
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a># Insert each point into the graph
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>FOREACH point IN S:           ---------- INSERT_POINT(graph, point)
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    neighbors[] = select_one_random(G)
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    candidate[] = neighbors[]
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    visited_points[] = neighbors[]
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    # Code in this WHILE loop is to find the neighbors of the point
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    # in current graph
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    WHILE (!candidate.empty())
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>        nearest_candidate = candidate.pop_nearest(point)
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>        furthest_neighbor = neighbors.get_furthest(point)
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        # no candidate can b closer
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>        IF (distant(nearest_candidate, point) &gt;
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>            distant(furthest_neighbor, point))
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>            break;
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>        # This candidate is great, but what about its neighbors?
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>        FOREACH candidate_neighbor in nearest_candidate.neighbors()
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>            IF (visited_points.has(candidate_neighbor))
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>                continue
+</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a>            visited_points.append(candidate_neighbor)
+</span><span id="__span-7-28"><a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>
+</span><span id="__span-7-29"><a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>            # the furthest one can be changed
+</span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>            furthest_neighbor = neighbors.get_furthest(point)
+</span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a>
+</span><span id="__span-7-32"><a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>            # The neighbor of this candidate is also great, its neighbors
+</span><span id="__span-7-33"><a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>            # can also be candidates
+</span><span id="__span-7-34"><a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>            IF (distant(candidate_neighbor, point) &lt;
+</span><span id="__span-7-35"><a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>                distant(furthest_neighbor, point))
+</span><span id="__span-7-36"><a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a>                candidate.append(candidate_neighbor)
+</span><span id="__span-7-37"><a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a>                neighbors.append(candidate_neighbor)
+</span><span id="__span-7-38"><a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a>                IF (neighbors.size() &gt; MAX_NEIGHBORS)
+</span><span id="__span-7-39"><a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a>                    neighbors.pop_furthest(point)
+</span><span id="__span-7-40"><a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a>
+</span><span id="__span-7-41"><a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>    # Now we have found the neighbors, add a bidirection connections
+</span><span id="__span-7-42"><a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a>    # between the each neighbor and the point
+</span><span id="__span-7-43"><a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a>    FOREACH this_neighbor in neighbors
+</span><span id="__span-7-44"><a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a>        add_bidirection_direction(this_neighbor, point)
+</span><span id="__span-7-45"><a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a>
+</span><span id="__span-7-46"><a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a>        # Since the neighbor has one more connection, we may need
+</span><span id="__span-7-47"><a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a>        # to shrink. This is a point to optimize. Read paper for detail.
+</span><span id="__span-7-48"><a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a>        IF this_neighbor.neighbors().size() &gt; MAX_NEIGHBORS
+</span><span id="__span-7-49"><a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a>            this_neighbor.drop_longest_connection()
+</span><span id="__span-7-50"><a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a>
+</span><span id="__span-7-51"><a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a># All points have been added
+</span><span id="__span-7-52"><a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a>RETURN G
+</span></code></pre></div></p>
+<h5 id="nsw_1">NSW的搜索</h5>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>OUTPUT: graph G, point P
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>RETURN K nearest neighbors
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>SEARCH_LAYER(G, p, K)
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>candidates = select_one_random(G)
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>visited_points = candidates
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a># LOOP until we have K stable points
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>WHILE TRUE
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    candidates_old = candidates
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    FOREACH candidate in candidates
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        FOREACH neighbor in candidate.neighbors()
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>            if (visited_points.has(neighbor))
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>                continue
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>            visited_points.add(neighbor)
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>            furthest_candidate = candidates.get_furthest(point)
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>            IF (distant(neighbor, P) &lt; distant(furthest_candidate, P) ||
+</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>                candidates.size() &lt; K)
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>                candidates.add(neighbor)
+</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>            IF (candidates.size() &gt; K)
+</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>                candidates.pop_furthest(P)
+</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>
+</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    IF candidates_old == candidates
+</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>        BREAK
+</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>
+</span><span id="__span-8-28"><a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>RETURN candidates
+</span></code></pre></div>
+<h4 id="hnsw-nsw">HNSW —— NSW的进化</h4>
+<p>显然，上述过程最大的问题之一为：
+1. 对于图的构建：每新加入一个点，都需要从一个随机点开始搜索它的邻居。
+2. 对于图的搜索：需要从一个随机点开始搜索。
+以上两点导致，NSW算法搜索了很多无用的点。
+H(hierarchy)NSW 为解决这个问题，从NSW图（layer=0）中选出部分点，再构建一个缩略的NSW图（layer=1）。在搜索的时候，只需要从layer=1的图中搜索出一个粗略结果，将该结果用于layer=0搜索过程中的初始化，即可大量减少无用的搜索。同理，层数也不一定只有2层，可以有更多。
+（这个思想在科研中似乎经常使用:先得出一个粗略的结果，再进一步精细化）</p>
+<p>为了构建一个这样的图，我们在插入一个点时。
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>INPUT: point P, a series of NSW graph G[]
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>cur_layer = -ln(unif(0, 1)) * MAX_LAYER
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a># for layer upper than current layer, just get a candidate
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>FOR l from MAX_LAYER to cur_layer + 1
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    closest_points = SEARCH_LAYER(G[l], P, 1, candidates = closest_point)
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a># insert into each layer from top to bottom of the below layers
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>FOR l from cur_layer to 0
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    closest_points = SEARCH_LAYER(G[l], P, 1, candidates = closest_points)
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    INSERT_POINT(graph, P, neighbors = closest_points)
+</span></code></pre></div></p>
+<p>同理在搜索时
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>INPUT: point P, a series of NSW graph G[]
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>cur_layer = P.layer
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a># for layer upper than current layer, just get a candidate
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>FOR l from MAX_LAYER to cur_layer + 1
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    closest_points = SEARCH_LAYER(G[l], P, 1, candidates = closest_point)
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a># for layer leq than current layer, just get a candidate
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>FOR l from cur_layer to 0
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    closest_points = SEARCH_LAYER(G[l], P, 1, candidates = closest_point)
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>return closest_points
+</span></code></pre></div></p>
+<h3 id="pgvector">PGVECTOR中的算法实现</h3>
+<h4 id="insert">INSERT</h4>
+<p><img alt="" src="../../assets/0017-001-HNSW_INSERT_ALGORITH.2024_02_12_1707672412.png" />
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>/*
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a> * Algorithm 1 from paper: update graph by inserting an element
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a> * Parms:
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a> * @element: element to insert
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a> * @entryPoint: the initial entry point
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a> * @index?
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a> * @procinfo
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a> * @collation
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a> * @m: same as &quot;M&quot; in algo(number of established connections)
+</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a> */
+</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>HnswInsertElement(HnswElement element, HnswElement entryPoint,
+</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>                  Relation index, FmgrInfo *procinfo, Oid collation,
+</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>                  int m, int efConstruction, bool existing)
+</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>    level = element-&gt;level;
+</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>    q = PointerGetDatum(element-&gt;vec)
+</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>
+</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>    # fill entry point list with the initial one
+</span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>    ep = list_make1(HnswEntryCandidate(entryPoint,))
+</span><span id="__span-11-19"><a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
+</span><span id="__span-11-20"><a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>    # for layers upper than the element&#39;s level
+</span><span id="__span-11-21"><a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>    for (int lc = entryLevel; lc &gt;= level + 1; lc--)
+</span><span id="__span-11-22"><a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>        # only get the nearest element now
+</span><span id="__span-11-23"><a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>        w = HnswSearchLayer()
+</span><span id="__span-11-24"><a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>        ep = w;
+</span><span id="__span-11-25"><a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>
+</span><span id="__span-11-26"><a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>    # for the below layers
+</span><span id="__span-11-27"><a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>    for (int lc = level; lc &gt;= 0; lc)
+</span><span id="__span-11-28"><a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>        # search for top efConstruction nearest ones
+</span><span id="__span-11-29"><a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a>        w = HnswSearchLayer(efConstruction)
+</span><span id="__span-11-30"><a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a>
+</span><span id="__span-11-31"><a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>        lw = w
+</span><span id="__span-11-32"><a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>
+</span><span id="__span-11-33"><a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a>        # get neighbors
+</span><span id="__span-11-34"><a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a>        neighbors = SelectNeighbors(lw, lm, lc, procinfo, collation, NULL);
+</span><span id="__span-11-35"><a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a>
+</span><span id="__span-11-36"><a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a>        # add connection
+</span><span id="__span-11-37"><a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a>        # Is this different from paper?
+</span><span id="__span-11-38"><a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a>        #  bidirectional vs single directional
+</span><span id="__span-11-39"><a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a>        #  shrink directions or not shrink
+</span><span id="__span-11-40"><a id="__codelineno-11-40" name="__codelineno-11-40" href="#__codelineno-11-40"></a>        AddConnections()
+</span><span id="__span-11-41"><a id="__codelineno-11-41" name="__codelineno-11-41" href="#__codelineno-11-41"></a>            foreach(lc2, neighbors)
+</span><span id="__span-11-42"><a id="__codelineno-11-42" name="__codelineno-11-42" href="#__codelineno-11-42"></a>                a-&gt;items[a-&gt;length++] = *((HnswCandidate *) lfirst(lc2));
+</span></code></pre></div></p>
+<h4 id="search-layer">search layer</h4>
+<p><img alt="" src="../../assets/0017-003-HNSW_SEARCH_LAYER_ALGORITHM.2024_02_12_1707672421.png" />
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>/*
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a> * Algorithm 2 from paper: search this layer with specifiyed enter points to
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a> * return &quot;ef&quot; closest neighbors
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a> * Parms:
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a> *  @q: same as algo
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a> *  @ep: enter points
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a> *  @ef: count of closest neighbors
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a> *  @lc: layer number
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a> *  @index:
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a> *  @procinfo:
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a> *  @collation:
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a> *  @inserting:
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a> *  @skipElement:
+</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a> */
+</span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>List *
+</span><span id="__span-12-16"><a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>HnswSearchLayer(Datum q, List *ep, int ef, int lc, Relation index,
+</span><span id="__span-12-17"><a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>                FmgrInfo *procinfo, Oid collation, int m, bool inserting,
+</span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>                HnswElement skipElement)
+</span><span id="__span-12-19"><a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    v = NULL.                 # visited points
+</span><span id="__span-12-20"><a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>    C = NULL                  # set of candidates, nearer first
+</span><span id="__span-12-21"><a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>    W = NULL                  # dynamic found nearest neighbors
+</span><span id="__span-12-22"><a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>
+</span><span id="__span-12-23"><a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>    # for each candidate in enter points
+</span><span id="__span-12-24"><a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>    foreach(lc2, ep)
+</span><span id="__span-12-25"><a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>        hc = (HnswCandidate *) lfirst(lc2); # HNSW candidates
+</span><span id="__span-12-26"><a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>        v.add(hc)
+</span><span id="__span-12-27"><a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>        C.add(hc)
+</span><span id="__span-12-28"><a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>        W.add(hc)
+</span><span id="__span-12-29"><a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>
+</span><span id="__span-12-30"><a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>    # loop until no more candidates
+</span><span id="__span-12-31"><a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>    while (!C.empty())
+</span><span id="__span-12-32"><a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>        c = C.pop_nearest()
+</span><span id="__span-12-33"><a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>
+</span><span id="__span-12-34"><a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>        # for each neighbor &quot;e&quot; in the nearest candicate &quot;c&quot;
+</span><span id="__span-12-35"><a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>        neighborhood = &amp;c-&gt;element-&gt;neighbors[lc];
+</span><span id="__span-12-36"><a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>        for (int i = 0; i &lt; neighborhood-&gt;length; i++)
+</span><span id="__span-12-37"><a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>            # neighbor e
+</span><span id="__span-12-38"><a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>            HnswCandidate *e = &amp;neighborhood-&gt;items[i];
+</span><span id="__span-12-39"><a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>            v.add(e)
+</span><span id="__span-12-40"><a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>            DO # continue if visited
+</span><span id="__span-12-41"><a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a>
+</span><span id="__span-12-42"><a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>            # f is the furthest element in dynamic neighbors
+</span><span id="__span-12-43"><a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a>            f = W.furthest()
+</span><span id="__span-12-44"><a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>
+</span><span id="__span-12-45"><a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a>            # find a good neighbor who is closer to q than the worst one in W
+</span><span id="__span-12-46"><a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a>            if (DISTANT(e, q) &lt; DISTANT(f, q) || wlen &lt; ef)
+</span><span id="__span-12-47"><a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a>                ec = e
+</span><span id="__span-12-48"><a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a>                # neighbor of ec can also be the candidates
+</span><span id="__span-12-49"><a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a>                C.add(ec)
+</span><span id="__span-12-50"><a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a>                # add ec to W to promote the lower bound
+</span><span id="__span-12-51"><a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a>                W.add(ec)
+</span><span id="__span-12-52"><a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a>
+</span><span id="__span-12-53"><a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a>                # clean W if it&#39;s too large
+</span><span id="__span-12-54"><a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a>                if (skipElement == NULL ||
+</span><span id="__span-12-55"><a id="__codelineno-12-55" name="__codelineno-12-55" href="#__codelineno-12-55"></a>                    list_length(e-&gt;element-&gt;heaptids) != 0)
+</span><span id="__span-12-56"><a id="__codelineno-12-56" name="__codelineno-12-56" href="#__codelineno-12-56"></a>                    wlen++;
+</span><span id="__span-12-57"><a id="__codelineno-12-57" name="__codelineno-12-57" href="#__codelineno-12-57"></a>                    /* No need to decrement wlen */
+</span><span id="__span-12-58"><a id="__codelineno-12-58" name="__codelineno-12-58" href="#__codelineno-12-58"></a>                    if (wlen &gt; ef)
+</span><span id="__span-12-59"><a id="__codelineno-12-59" name="__codelineno-12-59" href="#__codelineno-12-59"></a>                        W.pop_furthest
+</span><span id="__span-12-60"><a id="__codelineno-12-60" name="__codelineno-12-60" href="#__codelineno-12-60"></a>    return W
+</span></code></pre></div></p>
+<h5 id="pairing-heap">pairing heap</h5>
+<p><a href="https://oi-wiki.org/ds/pairing-heap/">配对堆 - OI Wiki (oi-wiki.org)</a>
+* insert(<span class="arithmatex">\(\mathrm{log}n\)</span>)
+* random_select(<span class="arithmatex">\(\mathrm{log} n\)</span>) select_min(<span class="arithmatex">\(\mathrm{log} n\)</span>) 
+* delete_min(<span class="arithmatex">\(\mathrm{log} n\)</span>)</p>
+<h4 id="select-neighbors">select neighbors</h4>
+<p><img alt="" src="../../assets/0017-004-HNSW_SELECT_NEIGHBORS_ALGORITHMS.2024_02_12_1707672431.png" /></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>/*
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a> * Algorithm 4: select neighbors starting with specified candidates
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a> * PARAMS:
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a> *  @c : candidates
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a> *  @m : number of neighbors to return
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a> *  @lc: layer number
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a> *  @
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a> *
+</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a> * NOTES:
+</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a> *  extendCandidates = false
+</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a> *  keepPrunedConnections = true
+</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a> *  pruned
+</span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a> */
+</span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>static List *
+</span><span id="__span-13-15"><a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>SelectNeighbors(List *c, int m, int lc, FmgrInfo *procinfo, Oid collation,
+</span><span id="__span-13-16"><a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>                HnswCandidate * *pruned)
+</span><span id="__span-13-17"><a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    r = NULL    # results---returning neighbors 
+</span><span id="__span-13-18"><a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>    w = c       # working candidates
+</span><span id="__span-13-19"><a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    wd = NULL;  # discarded candidates;
+</span><span id="__span-13-20"><a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>
+</span><span id="__span-13-21"><a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    # Since we don&#39;t extend candidates, if the starting candidates isn&#39;t enought
+</span><span id="__span-13-22"><a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>    # just return.
+</span><span id="__span-13-23"><a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>    if (list_length(w) &lt;= m)
+</span><span id="__span-13-24"><a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>        return w
+</span><span id="__span-13-25"><a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>
+</span><span id="__span-13-26"><a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>    # loop untils no more working candidate or enought neighbors
+</span><span id="__span-13-27"><a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>    while (length(w) &gt; 0 &amp;&amp; length(r) &lt; m)
+</span><span id="__span-13-28"><a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>        *e = llast(w); # get the nearest candidates
+</span><span id="__span-13-29"><a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>        closer = CheckElementCloser(e, r, lc, procinfo, collation);
+</span><span id="__span-13-30"><a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>        if(closer)
+</span><span id="__span-13-31"><a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a>            r.append(e)
+</span><span id="__span-13-32"><a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a>        else
+</span><span id="__span-13-33"><a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a>            wd.append(e)
+</span><span id="__span-13-34"><a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a>
+</span><span id="__span-13-35"><a id="__codelineno-13-35" name="__codelineno-13-35" href="#__codelineno-13-35"></a>    # loop until discarded candidates are empty or enough neighbors
+</span><span id="__span-13-36"><a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a>    while (!wd.empty() &amp;&amp; length(r) &lt; m)
+</span><span id="__span-13-37"><a id="__codelineno-13-37" name="__codelineno-13-37" href="#__codelineno-13-37"></a>        r.append(wd.pop_nearest())
+</span><span id="__span-13-38"><a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a>
+</span><span id="__span-13-39"><a id="__codelineno-13-39" name="__codelineno-13-39" href="#__codelineno-13-39"></a>    prune = wd.nearest()
+</span><span id="__span-13-40"><a id="__codelineno-13-40" name="__codelineno-13-40" href="#__codelineno-13-40"></a>    return r
+</span></code></pre></div>
+<h4 id="data-structure">data structure</h4>
+<div class="language-c highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HnswElementData</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="p">{</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="n">List</span><span class="w">       </span><span class="o">*</span><span class="n">heaptids</span><span class="p">;</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="n">uint8</span><span class="w">       </span><span class="n">level</span><span class="p">;</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="n">uint8</span><span class="w">       </span><span class="n">deleted</span><span class="p">;</span>
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="n">HnswNeighborArray</span><span class="w"> </span><span class="o">*</span><span class="n">neighbors</span><span class="p">;</span>
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="n">BlockNumber</span><span class="w"> </span><span class="n">blkno</span><span class="p">;</span>
+</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="n">OffsetNumber</span><span class="w"> </span><span class="n">offno</span><span class="p">;</span>
+</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span><span class="n">OffsetNumber</span><span class="w"> </span><span class="n">neighborOffno</span><span class="p">;</span>
+</span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="n">BlockNumber</span><span class="w"> </span><span class="n">neighborPage</span><span class="p">;</span>
+</span><span id="__span-14-11"><a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">    </span><span class="n">Vector</span><span class="w">     </span><span class="o">*</span><span class="n">vec</span><span class="p">;</span>
+</span><span id="__span-14-12"><a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="p">}</span><span class="w">           </span><span class="n">HnswElementData</span><span class="p">;</span>
+</span><span id="__span-14-13"><a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>
+</span><span id="__span-14-14"><a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HnswCandidate</span>
+</span><span id="__span-14-15"><a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="p">{</span>
+</span><span id="__span-14-16"><a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">    </span><span class="n">HnswElement</span><span class="w"> </span><span class="n">element</span><span class="p">;</span>
+</span><span id="__span-14-17"><a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">    </span><span class="kt">float</span><span class="w">       </span><span class="n">distance</span><span class="p">;</span>
+</span><span id="__span-14-18"><a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="p">}</span><span class="w">           </span><span class="n">HnswCandidate</span><span class="p">;</span>
+</span><span id="__span-14-19"><a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
+</span><span id="__span-14-20"><a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HnswNeighborArray</span>
+</span><span id="__span-14-21"><a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="p">{</span>
+</span><span id="__span-14-22"><a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="w">    </span><span class="kt">int</span><span class="w">         </span><span class="n">length</span><span class="p">;</span>
+</span><span id="__span-14-23"><a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="w">    </span><span class="n">HnswCandidate</span><span class="w"> </span><span class="o">*</span><span class="n">items</span><span class="p">;</span>
+</span><span id="__span-14-24"><a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a><span class="p">}</span><span class="w">           </span><span class="n">HnswNeighborArray</span><span class="p">;</span>
+</span></code></pre></div>
+<h5 id="_11">底层实现中的问题</h5>
+<ol>
+<li>论文中的图是双向连接，而pgvector实现的是单向连接</li>
+<li>pgvector中插入新向量时，没有更新其邻居的连接。（这么低级的问题有待验证）</li>
+</ol>
+<h3 id="page-representation_1">page representation</h3>
+<p><img alt="image-20231007080940352" src="../../assets/0017-002-HNSW_PAGE_REPRESENTATION.2024_02_12_1707672445.png" />
+<img alt="" src="../../assets/0017-011-PGVEC-HNSW-PAGE.2024_02_12_1707672457.png" /></p>
+<h2 id="vector-database">vector database 调研</h2>
+<h3 id="qdrant">qdrant</h3>
+<p><img alt="image-20231007080940352" src="../../assets/0017-012-vector-database.2024_02_12_1707672561.png" /></p>
+<blockquote>
+<p>Vector databases are optimized for <strong>storing</strong> and <strong>querying</strong> these high-dimensional vectors efficiently, and they often using specialized data structures and indexing techniques such as Hierarchical Navigable Small World (HNSW) – which is used to implement Approximate Nearest Neighbors – and Product Quantization, among others.</p>
+</blockquote>
+<p><img alt="image-20231007081700863" src="../../assets/0017-006-image-20231007081700863.2024_02_12_1707672473.png" /></p>
+<h4 id="_12">算法与存储</h4>
+<p>qdrant使用 <code>hnsw</code> 算法</p>
+<blockquote>
+<p>A key feature of Qdrant is the effective combination of <strong>vector</strong> and <strong>traditional</strong> indexes. It is essential to have this because for vector search to work effectively with filters, having vector index only is not enough. In simpler terms, a vector index speeds up vector search, and payload indexes speed up filtering.</p>
+</blockquote>
+<p>payload 索引仅用于过滤，我们关注向量索引部分</p>
+<blockquote>
+<p>Qdrant currently only uses HNSW as a vector index.</p>
+<p>All data within one collection is divided into segments. Each segment has its independent vector and payload storage as well as indexes.</p>
+</blockquote>
+<h2 id="_13">附录</h2>
+<h3 id="trianlge-inequality-kmeans">trianlge-inequality-Kmeans</h3>
+<ul>
+<li>维护的状态：<ul>
+<li>lower bound <span class="arithmatex">\(l(x,c)\)</span> of <span class="arithmatex">\(d(x,c)\)</span> for each point <span class="arithmatex">\(x\)</span> and center <span class="arithmatex">\(c\)</span><ul>
+<li>each time <span class="arithmatex">\(d(x,c)\)</span> is computed, set <span class="arithmatex">\(l(x,c)=d(x,c)\)</span></li>
+</ul>
+</li>
+<li><span class="arithmatex">\(c(x)= \mathrm{argmin}_cd(x,c)\)</span> get its center for each point <span class="arithmatex">\(x\)</span></li>
+<li>upper bound <span class="arithmatex">\(u(x)\)</span> of <span class="arithmatex">\(d(x,c)\)</span> for each point <span class="arithmatex">\(x\)</span>, indicating the upper bound of <span class="arithmatex">\(x\)</span> to its center</li>
+<li><span class="arithmatex">\(r(x)\)</span> is a <code>boolean</code> value indicate whether <span class="arithmatex">\(u(x, c)\)</span> is out of date</li>
+</ul>
+</li>
+<li>过程： <ul>
+<li>initialization<ul>
+<li>compute <span class="arithmatex">\(d(x,c)\)</span> for each point <span class="arithmatex">\(x\)</span> and each center <span class="arithmatex">\(c\)</span>, which means <span class="arithmatex">\(l(x,c)\)</span> is computed too</li>
+<li><span class="arithmatex">\(u(x)=\mathrm{min}_c(d,c)\)</span> for each point <span class="arithmatex">\(x\)</span></li>
+</ul>
+</li>
+<li>repeate until convergence:<ol>
+<li>For each pair of centers <span class="arithmatex">\(c\)</span> and <span class="arithmatex">\(c'\)</span> , compute <span class="arithmatex">\(d(c,c')\)</span>, this is to compute <span class="arithmatex">\(s(c)=1/2\min_{c'\neq c}d(c,c')\)</span> . <strong>So we get the distance to the nearest center of each center</strong></li>
+<li>identify all point <span class="arithmatex">\(x\)</span> such that <span class="arithmatex">\(u(x) \le s(c(x))\)</span> .<strong>If the point is so near to its center, its center can't be changed in this iteration. See lemma 1</strong></li>
+<li>For each remaining point <span class="arithmatex">\(x\)</span> and centers <span class="arithmatex">\(c\)</span> such that<ol>
+<li><span class="arithmatex">\(c\neq c(x)\)</span>  (<strong>not the current center</strong>) and</li>
+<li><span class="arithmatex">\(u(x)&gt;l(x,c)\)</span> (<strong>upper bound to current center greater than lower bound of this center</strong>) and</li>
+<li><span class="arithmatex">\(u(x)&gt;\frac{1}{2}d(c(x),c)\)</span>(<strong>upper bound to current center greater than half of the two centers distant, See lemma 1</strong>) <strong>iterm <code>2</code> and <code>3</code> means <span class="arithmatex">\(u(x)\)</span> may be too big</strong> </li>
+<li>DO:<ol>
+<li>If <span class="arithmatex">\(r(x)\)</span> , compute<span class="arithmatex">\(d(x, c(x))\)</span> and set <span class="arithmatex">\(r(x)=false\)</span>, else <span class="arithmatex">\(d(x,c(x))=u(x)\)</span></li>
+<li>if <span class="arithmatex">\(u(x)&gt;l(x,c)\)</span> and <span class="arithmatex">\(u(x)&gt;\frac{1}{2}d(c(x),c)\)</span> then (<strong>same as the above</strong>) <ol>
+<li>compute <span class="arithmatex">\(d(x,c)\)</span>, if <span class="arithmatex">\(d(x,c) &lt; d(x,c(x))\)</span> then assign <span class="arithmatex">\(c(x)=c\)</span> (<strong>update center</strong>)</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>For each center <span class="arithmatex">\(c\)</span> , let <span class="arithmatex">\(m(c)\)</span> be the new mean point</li>
+<li>For each point <span class="arithmatex">\(x\)</span> and center <span class="arithmatex">\(c\)</span>, assign <span class="arithmatex">\(l(x,c)=\max\{l(x,c)-d(c,m(c))\}\)</span> (<strong>update lower bound by lemma 2</strong>) </li>
+<li>For each point x, assign <span class="arithmatex">\(u(x)=u(x) + d(m(c(x)),c(x))\)</span> (<strong>update lower bound by lemma 2</strong> ) and <span class="arithmatex">\(r(x)=true\)</span></li>
+<li>Replace each center <span class="arithmatex">\(c\)</span> by <span class="arithmatex">\(m(c)\)</span></li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="knuths-algorithm-s">采样算法 Knuth's algorithm S</h3>
+<ul>
+<li>算法描述： Select <span class="arithmatex">\(n\)</span> items from a set of <span class="arithmatex">\(M\)</span> iems with equal probility for <span class="arithmatex">\(M \geq n\)</span>  </li>
+<li>实现</li>
+</ul>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>samples = set[0:n-1]
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>for i in (n, M)
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    with prob = n/i:
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>        samples[random()%n] = set[i]
+</span></code></pre></div>
+<p>参考文档 <a href="https://rosettacode.org/wiki/Knuth's_algorithm_S">Knuth's algorithm S - Rosetta Code</a> 。</p>
+<p>社区讨论 [PostgreSQL: Re: <a href="https://www.postgresql.org/message-id/8ftr60l1ebgcable559ogr2tlb6nuujllq@email.aon.at">GENERAL] Large DB</a></p>
+<h2 id="_14">后记</h2>
+<ul>
+<li>pg官方的新闻：<a href="https://www.postgresql.org/about/news/pgvector-050-released-2700/">PostgreSQL: pgvector 0.5.0 Released!</a> 。pgvector在社区的热度不小</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1770 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0013-postgresql/0024-index-in-pg/0025-hot-and-create-index/">
+      
+      
+        <link rel="prev" href="../../0022-wal/0023-wal-insert/">
+      
+      
+        <link rel="next" href="../../../0031-learn_rust/0032-bstree/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>1 概述 - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              1 概述
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0007-zero2rsa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0000-computer_science/0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0010-paper_reading/0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0010-paper_reading/0011-roaring-bitmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0010-paper_reading/0012-mesi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0010-paper_reading/0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0010-paper_reading/0027-constant_recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0017-pgvector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../0031-learn_rust/0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="1">1 概述</h1>
+<p>本文介绍 PostgreSQL 中 Heap Only Tuple(HOT) 技术以及创建索引相关的知识，主要包含以下内容：
+1. HOT 的基本原理
+2. 普通的创建索引 (Create Index) 流程
+3. 同时创建索引 (Create Index Concurrently CIC) 的原理</p>
+<p>本文不包括：
+1. btree 等索引的具体实现方式
+2. PostgreSQL 对索引访问方式 (Access Method) 的抽象</p>
+<h1 id="2-hot">2 HOT 基础</h1>
+<p>简单而言, HOT(Heap Only Tuple) 指没有索引指向的元组，用于消除元组更新引起的索引膨胀，原理如下图：</p>
+<p><img alt="image-20240913221635357" src="../../../assets/0025-001-hot_page.png" /></p>
+<ol>
+<li>元组指向另一个元组：索引指向 line_ptr_1 ，line_ptr_1 指向 tuple_1 ，tuple_1 被更新后成为 tuple_2，此时 tuple_1 指向 tuple_2，而索引指向的 line pointer 没有发生变化。 </li>
+<li>line pointer 也可以指向另一个 line pointer：索引指向 line_ptr_3 , line_ptr_3 指向 line_ptr_4 ，line_ptr_4 指向 tuple3</li>
+</ol>
+<p>显然，HOT 技术具有如下优点</p>
+<ol>
+<li>对于被更新的元组，无需创建新的索引指针指向新元组</li>
+<li>旧元组可以被“普通操作”删除掉，并不一定需要 vacuum （相当 vacuum 的工作被分给了普通的 dml ）</li>
+</ol>
+<p>同时，触发 HOT 链也需要严格的限制：</p>
+<ol>
+<li>该更新不会修改表的索引所引用的任何列，不包括汇总索引</li>
+<li>包含旧行的页面有足够的空闲空间用于存放更新后的行，即，HOT 链不能跨 page</li>
+</ol>
+<h2 id="2-1-hot">2-1 HOT 链的构建</h2>
+<p>（一）：表 tbl(x int, y int) 在 x 上有索引，先插入一行  tuple_1=(x=1, y=1) ，结果如下</p>
+<p><img alt="image-20240912110738151" src="../../../assets/0025-002-hot-insert_1.png" /></p>
+<p>（二）：当更新 tuple_1 为 (x=1,y=2) 时， 新增 lp_2, 和 tuple_2 ，但是不会新增索引指针，而是由 tuple_1 的 header 会记录 tuple_2 的位置。</p>
+<p><img alt="image-20240912110738151" src="../../../assets/0025-003-hot-insert_2.png" /></p>
+<p>从可见性的角度思考，对于一个快照而言，一个 HOT 链上最多只有一个 tuple 可见。</p>
+<p>所以使用索引扫描时，会先找到 tuple_1 判断 tuple_ 1 是否符合可见性：</p>
+<ol>
+<li>如果 tuple_1 可见，那么立即返回，不在向下搜索。</li>
+<li>如果 tuple_1 不可见，再继续向下搜素。</li>
+</ol>
+<p>（三）：再更新 tuple_1 为 tuple3=(x=1, y=3)，结果如下</p>
+<p><img alt="image-20240912110738151" src="../../../assets/0025-004-hot-insert_3.png" /></p>
+<h2 id="2-2">2-2 清理</h2>
+<p>显然如果一个tuple一直被更新，那么其 HOT 链会很长，影响索引搜索的性能，所以需要去清理 HOT 链，清理分为两步，一个是 pruning （修剪），另一个是 defragmentation （碎片整理）</p>
+<p>（四）：pruning （修剪）：等 tuple_1 和 tuple_2 多所有事务都不可见时，则通过修改 line pointers，减少 hot 链的长度。 line pointer 2 可以被其他操作复用，但是 tuple_1 和 tuple_2 占用的空间仍没有被清理。如图：</p>
+<p><img alt="image-20240912151435754" src="../../../assets/0025-005-hot-prune.png" /></p>
+<p>（五）：defragmentation （碎片整理）：将对应的 tuple 彻底删除，如图</p>
+<p><img alt="006-hot-defragmentation" src="../../../assets/0025-006-hot-defragmentation.png" /></p>
+<h1 id="3-create-index">3 Create Index 的流程</h1>
+<p>该章节介绍普通的创建索引的大致过程，尤其是缓存一致性和对 HOT 的特殊处理</p>
+<h2 id="3-1">3-1 准备步骤</h2>
+<ol>
+<li>权限校验：包括</li>
+<li>选择索引名， access method （主要是确认 access method 是否存在）</li>
+<li>加锁：shared lock，阻止写入</li>
+</ol>
+<h2 id="3-2">3-2 创建空索引</h2>
+<ol>
+<li>创建 heap <code>heap_create</code></li>
+<li>build relcache</li>
+<li>创建文件 <code>smgrcreate</code></li>
+<li>记录依赖</li>
+<li>向 <code>pg_class</code> , <code>pg_index</code> , <code>pg_attribute</code>  中写入对应的记录</li>
+<li>注册对应表的缓存无效信息，以便在事务结束时发送 <code>CacheInvalidateRelcache</code></li>
+</ol>
+<h2 id="3-3-index-access-method">3-3 调用对应的 index access method 创建索引</h2>
+<p>这里和 HOT 关系较大，需要简单展开：</p>
+<p>在 index access method 内部，会使用回调函数 <code>heapam_index_build_range_scan</code> 来扫描 heap，以确定有哪些 tuple 需要加入到索引中：</p>
+<ol>
+<li>该扫描使用的快照为 <code>SnapshotAny</code> ，即所有元组都需要被处理。</li>
+<li>每当扫描到一个元组时，需要像 <code>vacuum</code> 一样判断该元组的状态，包括：</li>
+<li>对所有事务都不可见 (<code>HEAPTUPLE_DEAD</code>) ，那么显然不需要对他创建索引</li>
+<li>如果所有事务都可见 (<code>HEAPTUPLE_LIVE</code>)，那么显然需要对他创建索引</li>
+<li>如果一些事务可见：<ol>
+<li>(<code>HEAPTUPLE_RECENTLY_DEAD</code>) ，最近被删除，但是有些事务仍然可以看到 （重点处理）：</li>
+<li>(<code>INSERT_IN_PROGRESS</code>) 和 (<code>DELETE_IN_PROGRESS</code>) ，正在被插入、删除 ：考虑到大部分情况下 <code>create index</code> 语句不会在事务块中执行，这里跳过。</li>
+</ol>
+</li>
+</ol>
+<h2 id="3-3-1-heaptuple_recently_dead">3-3-1 如何处理 <code>HEAPTUPLE_RECENTLY_DEAD</code></h2>
+<h3 id="3-3-1-1-hot">3-3-1-1 非 HOT</h3>
+<p>说明该 tuple 被删除了，但是有一些事务仍然对其可见，那么也需要加入到索引中。否则这些事务后续通过当前创建的索引就无法找到该元组。</p>
+<p><img alt="007-index-non-hot-dead" src="../../../assets/0025-007-index-non-hot-dead.png" /></p>
+<p>注意：在判断一个表有哪些索引时，使用快照是“最新的快照”，而非当前事务的快照。</p>
+<h3 id="3-3-1-2-hot">3-3-1-2 HOT</h3>
+<p>如果该 tuple 在 HOT 链中，问题就有些棘手。</p>
+<ol>
+<li>此时不方便将 HOT 链破坏掉。（创建索引的时候直接修改 HEAP 中内容确实不算合理）</li>
+<li>但如果不破坏，就（必须）将该 tuple 加入到新索引中，而该 HOT 链可能和新索引冲突</li>
+</ol>
+<p>为此，PostgreSQL 采取了一种巧妙地方式</p>
+<ol>
+<li>不将该 tuple 加入到新索引中</li>
+<li>对于一些仍然可以访问该 tuple 的事务，阻止其使用新索引。</li>
+</ol>
+<p>阻止的方式为：pg_index 中有字段 <code>indcheckxmin</code> 。当该字段为 true 时，如果事务 T 想要使用该索引，需要确保自己最旧的快照在创建索引的快照之后，即事物 T 的 <code>TransactionXmin</code> （逻辑）大于 <code>pg_index</code>  中对应 tuple 的 <code>xmin</code> </p>
+<ol>
+<li><code>TransactionXmin</code> 表示当前事务的所有快照中，最小的的 xmin。（快照中， <code>xmin</code> 前的事务都结束了）</li>
+<li><code>pg_index</code>  中对应 tuple 的 <code>xmin</code> 表示 该索引创建的 xid</li>
+</ol>
+<p><img alt="008-indcheckxmin" src="../../../assets/0025-008-indcheckxmin.png" /></p>
+<h2 id="3-3-2-hot">3-3-2 对 HOT 链上的元组构建索引</h2>
+<p>由于创建新索引会导致已有的 HOT 链无效，这里还需讨论如何将已有 HOT 链中元组如何构建到索引中。考虑如下情形，现在需要对 <code>y</code> 这一列创建索引，只需要将 tuple_3 加入到索引中(y=2)即可。由于一个 line pointer 只能在一个 HOT 链中，所以此时索引应该指向 lp_1（注意 tuple_1 有 y=1)。</p>
+<p><img alt="009-index-entry-use-root" src="../../../assets/0025-009-index-entry-use-root.png" /></p>
+<p>如果想去“优化“ 新HOT链的长度，让索引指向 lp_2 或者 lp_3，会产生很多问题，例如指向 lp_3，如果后续更新 tuple3 为 tuple4(x=1,y=2,z=3)，旧很难清理 HOT 链，</p>
+<p><img alt="010-index-entry-not-root_1" src="../../../assets/0025-010-index-entry-not-root_1.png" /></p>
+<p>在清理时还需要注意 ptr_3 有索引指向，造成代码复杂度很高</p>
+<p><img alt="011-index-entry-not-root_2" src="../../../assets/0025-011-index-entry-not-root_2.png" /></p>
+<h1 id="4-create-index-concurrently-cic">4 Create Index Concurrently (CIC) 的原理解析</h1>
+<ul>
+<li>解决的问题：</li>
+<li>同步创建索引 <code>create index concurrently</code> 解决了创建索引期间，<code>DML</code> 语句会被阻塞的问题。</li>
+<li>思路：</li>
+<li>和 <code>pg_repack</code> , <code>pg_squeeze</code> 等重写表的工具相似，内核中实现的同步创建索引也使用了 “存量 + 增量” 的方式。</li>
+<li>不同的是，官方提供的同步创建索引功能，几乎没有和任何其他特性耦合，例如没有使用触发器和逻辑复制。</li>
+</ul>
+<p>难点有：
+1. 在不同的字段上，新创建一个索引会破坏 <code>heap</code> 中的原 <code>HOT</code> 链，创建的过程中也会影响到新的 <code>HOT</code> 链。
+2. 在不使用触发器和逻辑复制等功能的情况下，如何记录增量数据？</p>
+<p>简单流程：通过三个事务完成</p>
+<ol>
+<li>阶段一：创建索引文件和修改系统表。 此时索引为 <code>not ready</code> + <code>not valid</code>。但其他 SQL 需要遵循对应的 HOT 规则。</li>
+<li>阶段二：获取快照 <code>A</code> ，使用对该快照可见的元组创建索引，并设置为 <code>ready</code> 。阶段二结束后，其他 SQL 修改表时，也需要修改该索引。</li>
+<li>阶段三：获取快照 <code>B</code> ，将快照 <code>B</code> 可见但快照 <code>A</code> 不可见的元组插入索引，并设置为 <code>valid</code> ，查询可以使用该索引。</li>
+</ol>
+<h2 id="4-1">4-1 阶段一：创建空索引</h2>
+<p>创建空索引的核心原因是：在将存量数据加入的索引中时，确保其他连接的修改不会破坏 HOT（更近一步的原因在阶段 2 描述）。方式为向 pg_index 中记录一个 <code>indisready==false &amp;&amp; indisvalid==false</code> 的索引。所以问题在于：其他连接如何感知到该索引。</p>
+<p>每个连接都会缓存自己 <code>relcache</code> 和 <code>syscache</code> ，如果没有接收到缓存失效信息，这些缓存会一直保留。一般而言，事务开始时，会处理所有的缓存失效消息，在事务的执行的过程中，也有埋点来处理失效信息。而且，处理结果不会返回给发送端。</p>
+<p>所以为了保证其他连接都会看到新索引，简单的想法是：在创建空索引的事务结束后，需要等到当前所有其他事务全部结束，才能开启第二阶段。</p>
+<p><img alt="012-see-empty-index" src="../../../assets/0025-012-see-empty-index.png" /></p>
+<p>实际上，代码实现与上述有所差别：</p>
+<p>PostgreSQL 中，还有一处会处理失效信息：当进程执行修改表的操作时，需要打开表获取 <code>relcache</code> ，而在打开表操作时，会处理缓存失效信息。打开表获取 relcache ：</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>relation_open/try_relation_open -&gt; LockRelationOid -&gt; AcceptInvalidationMessages
+</span></code></pre></div>
+<p>所以此时：如果当前执行 CIC 的连接，可以获取到该表的 <code>ShareLock</code> lock，可以说明</p>
+<ol>
+<li>此时没有其他事务打开了该表并会能修改：因为 <code>SharedLock</code> 仅不与 <code>select</code> 、 <code>select for update/share</code> 相冲突，与任何修改表的锁相冲突</li>
+<li>后续打开该表的事务，都会处理之前发送的缓存失效信息，可以感知到该空索引</li>
+</ol>
+<p><img alt="013-wait-for-lockers" src="../../../assets/0025-013-wait-for-lockers.png" /></p>
+<p>具体代码为 lmgr 层的 <code>WaitForLockers</code> 函数</p>
+<div class="language-c highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cm">/*</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="cm"> * Now we must wait until no running transaction could have the table open</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="cm"> * with the old list of indexes.  Use ShareLock to consider running</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="cm"> * transactions that hold locks that permit writing to the table.  Note we</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="cm"> * do not need to worry about xacts that open the table for writing after</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="cm"> * this point; they will see the new index when they open it.</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="cm"> */</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">WaitForLockers</span><span class="p">(</span><span class="n">heaplocktag</span><span class="p">,</span><span class="w"> </span><span class="n">ShareLock</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span>
+</span></code></pre></div>
+<h2 id="4-2">4-2 阶段二：使用存量数据创建索引</h2>
+<p>在确保所有连接都发现了该索引时，可以使用存量数据创建索引</p>
+<p>该过程和普通的创建索引相似，但是进行 <code>heap</code> 扫描时，使用的快照不同。在一般的索引创建中，使用的是 <code>SnapshotAny</code> ，所有行都可见，而 CIC 中使用的是当前事务的快照。</p>
+<p>问题仍然出现在 HOT 链上，虽然对于创建索引的字段，当前不会产生新的 HOT 链，但是仍然会有旧的 HOT 链 ，所以构建索引的方式和普通地创建索引相同。</p>
+<p>举个例子:</p>
+<ul>
+<li>初始状态有 tuple_1 和 tuple_2 ，以及字段 a 上的索引。现对字段 b 创建建索引，</li>
+<li>tuple_1 对当前快照不可见（too old）</li>
+<li>tuple_2 可见。当把 tuple_2 加入到索引中时，索引值为 b=2，但索引入口指向 b=1 的元组（HOT链的开头），</li>
+<li>在阶段2中，有其他事务将 tuple_2 进行成了 tuple_3 ，将 c 改为了 2。该更新满足 HOT （a, b 都没有变），所以仍在 HOT 链上。但是 tuple_3 对当前快照（CIC）不可见 (in feature)，所以不处理。</li>
+<li>在阶段2中，有其他事务将 tuple_3 进行成了 tuple_4，将 b 改为了3。该更新不满足 HOT，所以索引 idx_a 需要创建新的指针</li>
+</ul>
+<p><img alt="014-cic-phase2-example" src="../../../assets/0025-014-cic-phase2-example.png" /></p>
+<p>当索引构建完毕后，将 pg_index 的中对应行的 <code>indisready</code> 设置为 true，这样其他事务后续修改表时，会同步修改该索引。和阶段1相似，当前事务提交后，开启新的事物（xact3），等到其他事务都感知到 <code>indisready=true</code> 时（同样使用 WaitForLockers 方案），开始阶段三。</p>
+<h2 id="4-3">4-3 阶段三： 增量数据的插入</h2>
+<p>该步骤的主要工作为把阶段二中遗漏的 tuple 加入索引中。方法为：使用当前的事务快照，将该快照可见的但是索引中没有的元组，加入索引中，具体做法为：</p>
+<p>（一）扫描索引，获取索引中所有的 ctid，并进行排序，得到 <code>Tuplesortstate</code></p>
+<p>（二）使用当前快照，进行全表扫描，对于每一行，在 <code>Tuplesortstate</code> 搜索对应的 ctid。注意，如果全表扫描得到的是 heap only tuple，则使用其根 tuple 的 ctid。如果在 <code>Tuplesortstate</code> 中没有找打，则将该元组插入到索引中。</p>
+<p>举个例子： tuple_3 虽然是在阶段二中新增的 tuple ，但是其根 tuple，即 tuple_1 已经在索引中了，所以在阶段三中忽略。而 tuple_4 不在 HOT 链中，也不在索引中，所以需要插入到索引中。</p>
+<p><img alt="015-cic-phase3-build" src="../../../assets/0025-015-cic-phase3-build.png" /></p>
+<p>增量数据插入结束后，仍不能设置 <code>indisvalid=true</code> ：考虑一个元组，它在阶段二中被创建，却在阶段三前被删除，所以此时该元组仍然不在索引中，但是可能有其他事务（事务 T）可以看到该元组，故此时需要等事务 T 结束。由于无法确保事务 T 会修改表，所以这里不能使用阶段一中的 <code>WaitForLockers</code> 方法，只能等待。</p>
+<p>所以流程为将增量数据插入元组后，获取当前快照的 xmin，记为 xminlimit，并提交。之后开启新的事物，等待所有含有 <code>snap.xmin&lt;xminlimit</code> 的快照的事务全部提交，再设置 <code>indisvalid=true</code> 并提交。</p>
+<p><img alt="016-cic-phase3-wait" src="../../../assets/0025-016-cic-phase3-wait.png" /></p>
+<p>提交后，所以事务（包括正在运行的）都可以使用新索引了。</p>
+<h2 id="4-3-faq">4-3 FAQ</h2>
+<h3 id="4-3-1-unique-index">4-3-1 unique index</h3>
+<p>问题：创建 unique index 时，阶段二和阶段三的两次插入，会引起 unique index 的冲突？</p>
+<p>unique 冲突都是在各自索引的 <code>aminsert</code> 中实现的，只有 btree 实现了 unique 特性</p>
+<p>举例1：表有 a,b 三个字段，其中 a 上有索引</p>
+<ol>
+<li>tuple_1(1,1) 在阶段二中被加入到索引中。</li>
+<li>在阶段二中，有其他事务将 tuple_1 更新为了 tuple_2(2,1)</li>
+<li>在阶段三中，将 tuple_2 插入到索引中时，索引发现 tuple_1 可能，使用 <code>SNAPSHOT_DIRTY</code> 看 tuple_1 ，发现 tuple_1 已经被删除，所以实际上没有冲突，该情况和一般的索引插入相同：</li>
+</ol>
+<p><img alt="017-cic-unique-check_1" src="../../../assets/0025-017-cic-unique-check_1.png" /></p>
+<p>举例2：表有 a,b 三个字段，其中 a 上有索引</p>
+<ol>
+<li>tuple_1(1,1) 在阶段二中被加入到索引中。</li>
+<li>在阶段二中，有其他事务将 tuple_1 更新为了 tuple_2(2,1)</li>
+<li>在阶段三中，有其他事务将 tuple_2 更新为了 tuple_3(3,1)，而此时执行 CIC 的事务快照只能看见 tuple_2</li>
+<li>在阶段三中，将 tuple_2 插入到索引中时：</li>
+<li>发现 tuple_1 可能有冲突，使用 <code>SNAPSHOT_DIRTY</code> 看 tuple_1 ，发现 tuple_1 已经被删除，所以实际上没有冲突</li>
+<li>发现 tuple_3 可能有冲突，使用 <code>SNAPSHOT_DIRTY</code> 看 tuple_3 ，发现 tuple_3 没有删除，此时再使用 <code>SNAPSHOT_SELF</code> 看  tuple_2 （即将要插入的元组），发现 tuple_2 已经被删除，故插入失败，但不报错。</li>
+</ol>
+<p><img alt="018-cic-unique-check_2" src="../../../assets/0025-018-cic-unique-check_2.png" /></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2315 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0010-paper_reading/0011-roaring-bitmap/">
+      
+      
+        <link rel="prev" href="../0003-google-f1/">
+      
+      
+        <link rel="next" href="../0012-mesi/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>roaring bitmap - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#0x0-introduction" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              roaring bitmap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0007-zero2rsa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0x0-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x0 Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x1-related-infomation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x1 Related Infomation:
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x2-introduction-to-roaring-bitmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x2 Introduction TO Roaring Bitmap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x2 Introduction TO Roaring Bitmap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x21-two-types-of-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x21 two types of containers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x22-conversion-between-the-two-types-of-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x22 conversion between the two types of container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-index-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 index array
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x3-set-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x3 set operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x3 set operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x31-bitmap-vs-bitmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x31 bitmap vs bitmap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x32-bitmap-vs-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x32 bitmap vs array
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x33-array-vs-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x33 Array vs Array
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x34-in-place-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x34 in place operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x4-the-run-type-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x4 The "run" type container
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x4 The &#34;run&#34; type container">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x41-to-introduction-to-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x41 To introduction to "run"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x42-decide-the-best-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x42 Decide The Best Container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x43-compute-the-number-of-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x43 Compute The Number Of Runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x44-logical-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x44 Logical operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x44 Logical operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x441-bitmap-vs-bitmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x441 Bitmap vs Bitmap:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0xf-appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0xF appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0xf1-rle-based-compressed-bitmaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF1 RLE-based compressed bitmaps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0xF1 RLE-based compressed bitmaps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0xf11-introduction-to-wah" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF11 Introduction To WAH
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0xf12-introduction-to-concise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF12 Introduction To Concise
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0012-mesi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0027-constant_recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0017-pgvector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0024-index-in-pg/0025-hot-and-create-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0031-learn_rust/0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0x0-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x0 Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x1-related-infomation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x1 Related Infomation:
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x2-introduction-to-roaring-bitmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x2 Introduction TO Roaring Bitmap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x2 Introduction TO Roaring Bitmap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x21-two-types-of-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x21 two types of containers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x22-conversion-between-the-two-types-of-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x22 conversion between the two types of container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-index-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 index array
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x3-set-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x3 set operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x3 set operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x31-bitmap-vs-bitmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x31 bitmap vs bitmap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x32-bitmap-vs-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x32 bitmap vs array
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x33-array-vs-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x33 Array vs Array
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x34-in-place-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x34 in place operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x4-the-run-type-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x4 The "run" type container
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x4 The &#34;run&#34; type container">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x41-to-introduction-to-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x41 To introduction to "run"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x42-decide-the-best-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x42 Decide The Best Container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x43-compute-the-number-of-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x43 Compute The Number Of Runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x44-logical-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x44 Logical operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x44 Logical operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x441-bitmap-vs-bitmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x441 Bitmap vs Bitmap:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0xf-appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0xF appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0xf1-rle-based-compressed-bitmaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF1 RLE-based compressed bitmaps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0xF1 RLE-based compressed bitmaps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0xf11-introduction-to-wah" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF11 Introduction To WAH
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0xf12-introduction-to-concise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0xF12 Introduction To Concise
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>roaring bitmap</h1>
+
+<h2 id="0x0-introduction">0x0 Introduction</h2>
+<p>A bitmap, also known as a bit array or bitset, is a data structure that represents a fixed-size sequence of bits.  That is the value of the <em>ith</em> bit representing the existence of the the <em>ith object.</em>
+Bare bitmap can cost much memory according to the total substantial data size, even if we have stored little infomation. Roaring bitmap provide a new method to compress the bitmap structure.</p>
+<h2 id="0x1-related-infomation">0x1 Related Infomation:</h2>
+<ul>
+<li>blogs:</li>
+<li>(Very Important Introduction) <a href="https://www.vikramoberoi.com/a-primer-on-roaring-bitmaps-what-they-are-and-how-they-work/?utm_source=blog.quastor.org&amp;utm_medium=referral&amp;utm_campaign=how-grab-implemented-rate-limiting">[Blog of Vikram Oberoi]:A primer on Roaring bitmaps: what they are and how they work</a></li>
+<li><a href="https://www.cnblogs.com/charlieroro/p/17919505.html">[blog of charlieroro] roaring bitmaps</a></li>
+<li><a href="https://cloud.tencent.com/developer/article/1136054">【木东居士】：不深入而浅出 Roaring Bitmaps 的基本原理</a></li>
+<li>paper </li>
+<li>Introduction: <a href="../../assets/0011-010-Better%20bitmap%20performance%20with%20Roaring%20bitmaps.pdf">0011-010-Better bitmap performance with Roaring bitmaps.pdf</a></li>
+<li>Opitmazition: <a href="../../assets/0011-011-Consistently%20faster%20and%20smaller%20compressed%20bitmaps%20with%20Roaring.pdf">0011-011-Consistently faster and smaller compressed bitmaps with Roaring.pdf</a></li>
+</ul>
+<h2 id="0x2-introduction-to-roaring-bitmap">0x2 Introduction TO Roaring Bitmap</h2>
+<h3 id="0x21-two-types-of-containers">0x21 two types of containers</h3>
+<p>We partition the range of 32-bit indexes ([0, n)) into chunks of <span class="arithmatex">\(2^{16}\)</span> integers sharing the same 16 most significant digits. We use specialized containers to store their 16 least significant bits.</p>
+<p>(One chunk' size is up to 8KB, that is 4096 integers.)</p>
+<p>When a chunk contains no more than 4096 integers, we use a sorted array of packed 16-bit integers. When there are more than 4096 integers, we use a <span class="arithmatex">\(2^{16}\)</span>​-bit bitmap. Thus, we have two types of containers: an array container for sparse chunks and a bitmap container for dense chunks.</p>
+<p><strong>Since the size of a chunk is up to 8KB, we may save much memoy if the cardinality is small. Don't worry about the memory allocator, it can deal with the small memory with local buffer. And I believe it's the most important meaning of two types of containers.</strong></p>
+<p><img alt="image.png" src="../../assets/0011-006-1714232020698-852891d5-53e1-4073-bf38-3b9f2fffc95d.2024_05_07_1715087143.png" /></p>
+<h3 id="0x22-conversion-between-the-two-types-of-container">0x22 conversion between the two types of container</h3>
+<p><strong>timing</strong></p>
+<ul>
+<li>When removing an integer, a bitmap container might become an array container if its cardinality reaches 4096.</li>
+<li>When adding an integer, an array container might become a bitmap container when its cardinality exceeds 4096.</li>
+</ul>
+<hr />
+<p><strong>method</strong></p>
+<ul>
+<li>When this happens, a new container is created with the updated data while the old container is discarded.</li>
+<li>Converting an array container to a bitmap container is done by creating a new bitmap container initialized with zeros, and setting the corresponding bits.</li>
+<li>To convert a bitmap container to an array container, we extract the location of the set bits using an optimized algorithm</li>
+</ul>
+<p><img alt="image.png" src="../../assets/0011-001-1714140703751-4816ae74-12dc-4eab-b499-ed1f786bf183.2024_05_07_1715087159-20240921135601371.png" /></p>
+<p><img alt="image.png" src="../../assets/0011-002-xxxxx.png" /></p>
+<h3 id="0x23-index-array">0x23 index array</h3>
+<p>To check for the presence of a 32-bit integer x, we first seek the container corresponding to <span class="arithmatex">\(x/2^{16}\)</span> using binary search. If a bitmap container is found, we access the (x mod <span class="arithmatex">\(2^{16}\)</span>)th bit. If an array container is found, we use a binary search again</p>
+<blockquote>
+<p>The containers are stored in a dynamic array with the shared 16 most-significant bits: this serves as a first-level index. The array keeps the containers sorted by the 16 most-significant bits.</p>
+</blockquote>
+<p><img alt="image.png" src="../../assets/0011-003-1714140793688-826bb436-f90a-4730-b85d-8cee646a7106.2024_05_07_1715087229.png" /></p>
+<h2 id="0x3-set-operations">0x3 set operations</h2>
+<p>There are </p>
+<ul>
+<li>Two basic opertions: union (bitwise OR) and intersection (bitwise AND); </li>
+<li>And three container type combinations: bitmap vs bitmap, array vs array annd bitmap vs array</li>
+</ul>
+<h3 id="0x31-bitmap-vs-bitmap">0x31 bitmap vs bitmap</h3>
+<p><strong>union operation</strong>(<strong>the result must be a bitmap container</strong>) <strong>:</strong></p>
+<p><img alt="image.png" src="../../assets/0011-004-1714140807012-1c9706c2-b1bb-4aab-b2b9-0aa1bcb2f030.2024_05_07_1715087239.png" />
+It might seem like computing bitwise ORs and computing the cardinality of the result</p>
+<p>would be significantly slower than merely computing the bitwise ORs. However, four factors mitigate this potential problem</p>
+<ol>
+<li><strong>[built in cpu instructions]</strong>: popular processors (Intel, AMD, ARM) have fast instructions to compute the number of ones in a word. Intel and AMD’s <em>popcnt</em> instruction has a throughput as high as one
+   operation per CPU cycle.</li>
+<li><strong>[Java Opitimization]</strong>: Recent Java implementations translate a call to Long.bitCount into such fast
+   instructions.</li>
+<li><strong>[superscalar]:</strong> Popular processors are superscalar: they can execute several operations at once. Thus, while we retrieve the next data elements, compute their bitwise OR and store it in memory, the processor can apply the popcnt instruction on the last result and increment the cardinality counter accordingly.</li>
+<li><strong>[enough L1 cache]</strong>: For inexpensive data processing operations, the processor may not run at full capacity due to cache misses.</li>
+</ol>
+<hr />
+<p><strong>intersection operation:</strong></p>
+<p>For computing intersections, we use a less direct route. First, we compute the cardinality of the result, using 1024 bitwise AND instructions. If the cardinality is larger than 4096, then we proceed as with the union, writing the result of bitwise ANDs to a new bitmap container. Otherwise, we create a new array container. We extract the set bits from the bitwise ANDs on the fly. See chapter "0x22" for detail</p>
+<h3 id="0x32-bitmap-vs-array">0x32 bitmap vs array</h3>
+<ul>
+<li>intersection(<strong>the result must be an array container</strong>)：we iterate over the sorted dynamic array, and verify the existence of each 16-bit integer in the bitmap container. The result is written out to an array container</li>
+<li>Unions(<strong>the result must be a bit map container</strong>)：we create a copy of the bitmap and simply iterate over the array, setting the corresponding bits</li>
+</ul>
+<h3 id="0x33-array-vs-array">0x33 Array vs Array</h3>
+<ul>
+<li>For unions: </li>
+<li>if the sum of the cardinalities is no more than 4096(<strong>the result must be an array container</strong>): we use a merge algorithm between the two arrays</li>
+<li>otherwise: Otherwise, we set the bits corresponding to both arrays in a bitmap container. We then compute the cardinality using fast instructions. If the cardinality is no more than 4096, we convert the bitmap container to an array containe.</li>
+<li>intersection(<strong>the result must be an array container</strong>): </li>
+<li>if the two arrays have cardinalities that differ by less than a factor of 64: merge</li>
+<li>otherwise: galloping intersection</li>
+</ul>
+<hr />
+<p><strong>Galloping</strong> is superior to a simple merge when one array (<span class="arithmatex">\(r\)</span>) is much smaller than other one (<span class="arithmatex">\(f\)</span>) because it can skip many comparisons. Starting from the beginning of both arrays, we pick the next available integer <span class="arithmatex">\(r_i\)</span> from the small array <span class="arithmatex">\(r\)</span> and seek an integer at least as large <span class="arithmatex">\(f_j\)</span> in the large array <span class="arithmatex">\(f\)</span> , looking first at the next value, then looking at a value twice as far, and so on. Then, we use binary search to advance in the second list to the first value larger or equal to <span class="arithmatex">\(r_i\)</span> .</p>
+<p><a href="https://en.wikipedia.org/wiki/Exponential_search">Galloping(exponential search) Introduction</a></p>
+<p>The initial value of <code>bound</code> can alway advance in each search.</p>
+<div class="language-cpp highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// Returns the position of key in the array arr of length size.</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kt">int</span><span class="w"> </span><span class="n">exponential_search</span><span class="p">(</span><span class="n">T</span><span class="w"> </span><span class="n">arr</span><span class="p">[],</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="n">key</span><span class="p">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">{</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">size</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">NOT_FOUND</span><span class="p">;</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">bound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">bound</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">arr</span><span class="p">[</span><span class="n">bound</span><span class="p">]</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">key</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">        </span><span class="n">bound</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">binary_search</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span><span class="w"> </span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">bound</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">bound</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">));</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="0x34-in-place-operations">0x34 in place operations</h3>
+<ul>
+<li>When computing the union between two bitmap containers, we can modify one of the two bitmap containers instead of generating a new bitmap container. Similarly, for the intersection between two bitmap containers, we can modify one of the two containers if the cardinality of the result exceeds 4096</li>
+<li>When computing the union between an array and a bitmap container, we can write the result to the bitmap container, by iterating over the values of the array container and setting the corresponding bits in the bitmap container. We can update the cardinality each time by checking whether the word value has been modified.</li>
+</ul>
+<h2 id="0x4-the-run-type-container">0x4 The "run" type container</h2>
+<h3 id="0x41-to-introduction-to-run">0x41  To introduction to "run"</h3>
+<p>The original Roaring has a limitation in some scenarios because it does not compress long runs of values. Indeed, given a bitset made of a few long runs (e.g., all integers in [10, 1000]), Roaring—as presented so far—can only offer suboptimal compression. If we consider the case of a bitmap made of all integers in [10, 1000], Roaring without support for runs would use 8 kB, whereas a few bytes ought to suffice.</p>
+<ol>
+<li>Such unnecessarily large bitmaps can stress memory bandwidth.</li>
+<li>computing the intersection of two bitmaps representing the ranges [10, 1000] and [500, 10000] can be done in a few cycles when using RLE-compressed bitmaps. But the original Roaring would require intersecting two bitmap containers and possibly thousands of cycles. See chapter "0xF1" for detail.</li>
+</ol>
+<hr />
+<p>To solve this problem, we decided to add a third type of container to Roaring, one that is ideally suited to coding data made of runs of consecutive values. The new container is <em>conceptually</em> simple: <strong>given a run (e.g., [10, 1000]), we store the starting point (10) and its length minus one (990). By packing the starting points and the lengths in pairs, using 16 bits each, </strong>we preserve the ability to support fast random access by binary search through the coded runs</p>
+<p>The run container, <strong>is made of a packed array of pairs of 16-bit integers</strong>. The first value of each pair represents a starting value, whereas the second value is the length of a run. For example, we would store the values 11, 12, 13, 14, 15 as the pair 11, 4 where 4 means that beyond 11 itself, there are 4 contiguous values that follow. </p>
+<p>In addition to this packed array, we need to <strong>maintain the number of runs</strong> stored in the packed array. Like the array container, the run container is stored in a dynamic array. During serialization, we <strong>write out the number of runs</strong>, followed by the corresponding packed array.</p>
+<h3 id="0x42-decide-the-best-container">0x42 Decide The Best Container</h3>
+<p>To decide the best container type, <strong>we are motivated to minimize storage</strong>. In serialized form, a run container uses 2 + 4r bytes(16-bit integer is 2 bytes and we need a pair; plus the number of runs) given r runs, a bitmap container always uses 8192 bytes and an array container uses 2c + 2 bytes, where c is the cardinality. Therefore, we apply the following rules:</p>
+<ul>
+<li>All array containers are such that they use no more space than they would as a bitmap container: they contain no more than 4096 values.</li>
+<li>Bitmap containers use less space than they would as array containers: they contain more than 4096 values.</li>
+<li>A run container is only allowed to exist if it is smaller than either the array container or the bitmap container that could equivalently store the same values. </li>
+<li>If the run container has cardinality greater than 4096 values, then the number of runs must be no more than <span class="arithmatex">\(\lceil(8192 − 2)/4\rceil = 2047\)</span>  runs. (Or it must be converted to a bitmap container)</li>
+<li>If the run container has cardinality no more than 4096, then the number of runs must be less than <strong>half the cardinality</strong>. (Or it must be converted to an array container)</li>
+</ul>
+<p>**So, the critical step in deciding whether an array or bitmap container should be converted to a run container is to count the number of runs of consecutive numbers it contains. **</p>
+<h3 id="0x43-compute-the-number-of-runs">0x43 Compute The Number Of Runs</h3>
+<p>For array containers, we count this number by iterating through the 16-bit integers and comparing them two by two in a straightforward manner. Because array containers have at most 4096 integers, this computation is expected to be fast.</p>
+<hr />
+<p>For bitmap containers, the below algorithm shows how to compute the number of runs. </p>
+<p><img alt="image.png" src="../../assets/0011-007-1714233519262-51a9cc7f-f364-4657-a05f-144704e3e8cf.2024_05_07_1715087279.png" /></p>
+<p>We can illustrate the core operation of the algorithm using a single 32-bit word containing 6 runs of consecutive ones:</p>
+<p><img alt="image.png" src="../../assets/0011-008-1714234212202-1054aa9f-0e10-4459-a1da-790390a81620.2024_05_07_1715087290.png" /></p>
+<ul>
+<li>We can verify that <span class="arithmatex">\(\mathrm{bitCount}((C_i \ll 1)\ \mathrm{ANDNOT}\ C_i) = 6\)</span>, that is, we have effectively computed the number of runs.  (<span class="arithmatex">\(a\ \mathrm{ANDNOT}\ b\)</span>is true iff a=1 and b=0)</li>
+<li>In the case where a run continues up to the left-most bit, and does not continue in the next word, it does not get counted, but we add another term ((<span class="arithmatex">\(C_i \gg 63\)</span>) ANDNOT <span class="arithmatex">\(C_i+1\)</span> when using 64-bit words) to check for this case.</li>
+</ul>
+<p>Nevertheless, the computation may be expensive—exceeding the cost of computing the union or intersection between two bitmap containers. Thus, instead of always computing the number of runs exactly, we rely on the observation that no bitmap container with more than 2047 runs should be converted. As soon as we can produce a lower bound exceeding 2047 on the number of runs, we can stop. An exact computation of the number of runs is important only when our lower bound is less than 2048. <strong>In short: estimate the lower bound count of runs first, and only do the precise computation if the lower bound is less than 2048.</strong></p>
+<p>There are several method to implement the heuristic algorithm, and see the paper for details.</p>
+<p><img alt="image.png" src="../../assets/0011-009-1715086504011-260c924d-1b54-4c71-8070-e876236e8d5c.2024_05_07_1715087301.png" /></p>
+<h3 id="0x44-logical-operations">0x44 Logical operations</h3>
+<p>There are many necessary logical operations, but we present primarily the <strong>union</strong> and <strong>intersection</strong>.</p>
+<h4 id="0x441-bitmap-vs-bitmap">0x441 Bitmap vs Bitmap:</h4>
+<h2 id="0xf-appendix">0xF appendix</h2>
+<h3 id="0xf1-rle-based-compressed-bitmaps">0xF1 RLE-based compressed bitmaps</h3>
+<p>There are many RLE-based compression formats. </p>
+<h4 id="0xf11-introduction-to-wah">0xF11 Introduction To WAH</h4>
+<p>For example, <strong>WAH</strong> organizes the data in <em>literal</em> and <em>fill</em> words. </p>
+<ul>
+<li>Literal words contain a mix of W − 1 zeros and ones (e.g., <span class="arithmatex">\(01011 · · · 01\)</span>) where W denotes the word size in bits: typically W = 32 or W = 64. </li>
+<li>Fill words are made of just W − 1 ones or just W − 1 zeros (i.e., <span class="arithmatex">\(11 · · · 11\)</span> or <span class="arithmatex">\(00 · · · 00\)</span>). WAH compresses sequences of consecutive identical fill words</li>
+</ul>
+<p>The most significant bit of each word distinguishes between fill and literal words</p>
+<ul>
+<li>When it is set to one, the remaining W −1 bits store the W −1 bits of a literal word.</li>
+<li>When it is set to zero, the second most significant bit indicates the bit value whereas the remaining bits are used to store the number of consecutive identical fill words (the run length)</li>
+</ul>
+<h4 id="0xf12-introduction-to-concise">0xF12 Introduction To Concise</h4>
+<p><strong>Concise</strong> is a variation that reduces the memory usage when the bitmap is _moderately sparse. _Instead of storing the run length using <span class="arithmatex">\(W − 2\)</span> bits, Concise uses only <span class="arithmatex">\(W − 2 − \lceil log2(W )\rceil\)</span> bits to indicate a run length <span class="arithmatex">\(r\)</span>, reserving <span class="arithmatex">\(\lceil log2(W )\rceil\)</span> bits to store a value <span class="arithmatex">\(p\)</span>. When <span class="arithmatex">\(p\)</span> is non-zero, we decode <span class="arithmatex">\(r\)</span> fill words, plus a single <span class="arithmatex">\(W − 1\)</span> bit word with its <span class="arithmatex">\(p^{th}\)</span> bit flipped.</p>
+<p>Below is an example:
+<img alt="image.png" src="../../assets/0011-005-1714231195835-441ff581-5a2b-49ad-b454-d875cbf5c3ae.2024_05_07_1715087318.png" /></p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

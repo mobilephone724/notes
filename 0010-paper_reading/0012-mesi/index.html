@@ -1,0 +1,2240 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0010-paper_reading/0012-mesi/">
+      
+      
+        <link rel="prev" href="../0011-roaring-bitmap/">
+      
+      
+        <link rel="next" href="../0026-20years-database/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>MESI AND MEMORY_BARRIER: paper reading - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#0x0-why-we-need-memory-barrier" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MESI AND MEMORY_BARRIER: paper reading
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0007-zero2rsa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0011-roaring-bitmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0x0-why-we-need-memory-barrier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x0 why we need memory barrier
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x1-cache-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x1 Cache Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x1 Cache Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x11-some-cases-of-cache-missnot-important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x11 some cases of cache miss(not important)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x2-cache-coherence-protocols" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x2 Cache-Coherence Protocols
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x2 Cache-Coherence Protocols">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x21-four-state-mesi-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x21 Four state: MESI States
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x22-messages-between-the-cpusand-memory-mesi-protocol-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x22 Messages between the cpus(and memory): MESI Protocol Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-state-machine-mesi-state-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 State Machine: MESI State Diagram
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x3-optimize-1-stores-result-in-unnecessary-stalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x3 Optimize 1: Stores Result in Unnecessary Stalls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x3 Optimize 1: Stores Result in Unnecessary Stalls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x31-store-forwarding-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x31: Store Forwarding problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x32-store-buffers-and-memory-barriers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x32 Store Buffers and Memory Barriers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x4-optimize-2-store-sequences-result-in-unnecessary-stalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x4 Optimize 2: Store Sequences Result in Unnecessary Stalls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x4 Optimize 2: Store Sequences Result in Unnecessary Stalls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x42-invalidate-queues-and-invalidate-acknowledge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x42 Invalidate Queues and Invalidate Acknowledge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x43-invalidate-queues-and-memory-barriers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x43 Invalidate Queues and Memory Barriers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x5-summary-read-and-write-memory-barriers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x5 Summary: Read and Write Memory Barriers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0027-constant_recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0017-pgvector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0024-index-in-pg/0025-hot-and-create-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0031-learn_rust/0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0x0-why-we-need-memory-barrier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x0 why we need memory barrier
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x1-cache-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x1 Cache Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x1 Cache Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x11-some-cases-of-cache-missnot-important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x11 some cases of cache miss(not important)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x2-cache-coherence-protocols" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x2 Cache-Coherence Protocols
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x2 Cache-Coherence Protocols">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x21-four-state-mesi-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x21 Four state: MESI States
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x22-messages-between-the-cpusand-memory-mesi-protocol-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x22 Messages between the cpus(and memory): MESI Protocol Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-state-machine-mesi-state-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 State Machine: MESI State Diagram
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x3-optimize-1-stores-result-in-unnecessary-stalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x3 Optimize 1: Stores Result in Unnecessary Stalls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x3 Optimize 1: Stores Result in Unnecessary Stalls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x31-store-forwarding-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x31: Store Forwarding problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x32-store-buffers-and-memory-barriers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x32 Store Buffers and Memory Barriers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x4-optimize-2-store-sequences-result-in-unnecessary-stalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x4 Optimize 2: Store Sequences Result in Unnecessary Stalls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x4 Optimize 2: Store Sequences Result in Unnecessary Stalls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x42-invalidate-queues-and-invalidate-acknowledge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x42 Invalidate Queues and Invalidate Acknowledge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x43-invalidate-queues-and-memory-barriers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x43 Invalidate Queues and Memory Barriers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x5-summary-read-and-write-memory-barriers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x5 Summary: Read and Write Memory Barriers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>MESI AND MEMORY_BARRIER: paper reading</h1>
+
+<ul>
+<li>paper </li>
+<li>Introduction: <a href="https://raw.githubusercontent.com/mobilephone724/blog_pictures/master/memory_barrier_withMarginNotes.2024_06_16_1718472482.pdf">Memory Barriers: a Hardware View for Software Hackers</a></li>
+</ul>
+<h2 id="0x0-why-we-need-memory-barrier">0x0 why we need memory barrier</h2>
+<p>In short, because <strong>reordering memory references allows much better performance</strong>, and so memory barriers are needed to force ordering in things like synchronization primitives whose <strong>correct operation depends on ordered memory references</strong>.</p>
+<h2 id="0x1-cache-structure">0x1 <strong>Cache Structure</strong></h2>
+<p><img alt="Untitled" src="../../assets/0012-009-Untitled.2024_06_17_1718631318.png" /></p>
+<h3 id="0x11-some-cases-of-cache-missnot-important">0x11 some cases of cache miss(not important)</h3>
+<p>The cache miss means that the CPU will have to wait (or be “stalled”) for hundreds of cycles while the item is fetched from memory.</p>
+<ul>
+<li><strong>capacity miss</strong>: After some time, the CPU’s cache will fill, and sub- sequent misses will likely need to eject an item from the cache in order to make room for the newly fetched item</li>
+<li>
+<p><strong>associativity miss</strong>: occur in set-associative caches.</p>
+<blockquote>
+<p>An "associativity cache miss" refers to a specific type of cache miss that can occur in set-associative caches.
+</p>
+<p>In a set-associative cache, the cache memory is divided into sets, and each set contains multiple cache lines (or cache blocks). When the CPU needs to access data in memory, it first checks the cache to see if the data is present. The cache lookup is done by first identifying the set that the data would be stored in, and then searching through the multiple cache lines within that set to see if the data is present.
+</p>
+<p>An associativity cache miss occurs when the data the CPU needs is not found in any of the cache lines within the identified set. This means the CPU has to go to main memory to fetch the data, which is slower than finding it in the cache.
+</p>
+<p>The number of cache lines per set is called the "associativity" of the cache. Caches with higher associativity (more cache lines per set) generally have lower associativity cache miss rates, but they are also more complex and expensive to implement. The goal is to find the right balance of associativity to minimize cache misses without making the cache design overly complex.</p>
+<ul>
+<li><strong>write miss</strong>: Before a given CPU writes to that data item, it must first cause it to be removed, or “invalidated”, from other CPUs’ caches. Once this invalidation has completed, the CPU may safely modify the data item. If the data item was present in this CPU’s cache, but was read- only, this process is termed a “write miss”.</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<p>cache structure: one cache address can store two(or more?) sets of data.</p>
+<p><img alt="Untitled" src="../../assets/0012-001-Untitled%201.2024_06_17_1718631325.png" /></p>
+<h2 id="0x2-cache-coherence-protocols">0x2 Cache-Coherence Protocols</h2>
+<h3 id="0x21-four-state-mesi-states">0x21 Four state: MESI States</h3>
+<p>The four types of states represent the state of a cache line in one cpu.</p>
+<p>Here, we use “I” to represent the cpu.</p>
+<ul>
+<li><strong>modified</strong>:<ul>
+<li>I have changed the value in private cache and not written it back to memory.</li>
+<li>Others  can’t access the memory until change their states(signal me).</li>
+</ul>
+</li>
+<li><strong>exclusive</strong>:<ul>
+<li>I haven’t changed the value in private cache. (But may change it later, transfer to <strong>modified</strong> state)</li>
+<li>Others can’t access the memory until change their states(signal me).</li>
+</ul>
+</li>
+<li><strong>shared</strong><ul>
+<li>Others can read the memory without consulting me.</li>
+</ul>
+</li>
+<li><strong>invalid:</strong><ul>
+<li>the cache line holds no data.</li>
+</ul>
+</li>
+</ul>
+<h3 id="0x22-messages-between-the-cpusand-memory-mesi-protocol-messages">0x22 Messages between the cpus(and memory): MESI Protocol Messages</h3>
+<ul>
+<li><strong>Read:</strong> a request for reading  a line</li>
+<li><strong>Read Response</strong>: The line data for a previous read. Either of memory or other cpu.</li>
+<li><strong>Invalidate</strong>: invalidate the line in <strong>all other cpus</strong></li>
+<li><strong>Invalidate Acknowledge:</strong> successful response to a previous <strong>Invalidate</strong> message</li>
+<li><strong>Read Invalidate</strong>: a <strong>atomic combination</strong> of “read” and “invalidate”. Requires both a “read response” and a set of “in- validate acknowledge” messages in reply.</li>
+<li><strong>Writeback:</strong> write a line to memory</li>
+</ul>
+<h3 id="0x23-state-machine-mesi-state-diagram">0x23 State Machine: MESI State Diagram</h3>
+<p><img alt="Untitled" src="../../assets/0012-002-Untitled%202.2024_06_17_1718631330.png" /></p>
+<p>Transitions are explained below:</p>
+<ul>
+<li>(a): write back to memory</li>
+<li>(b): modify the data in cache</li>
+<li>(c): I haven’t written back to memory but another cpu requests it (and will change it). So I return the value in cache and invalidate the private one without writing back to memory</li>
+<li>(d): I want to change a cache, so I emit a “invalidate” to other cpus. Now all others have acknowledge me, so I read and change my private cache.</li>
+<li>(e): Similar to “(d)”, but don’t need to read in memory.</li>
+<li>(f): Similar to (c), I haven’t written back to memory but another cpu requests it (but will not change it), so I return my private value.</li>
+<li>(g): Similar to (f)</li>
+<li>(h): similar to “(d)”, but don’t modify it now</li>
+<li>(i): similar to “(c)”, but don’t need to return my private value since that in memory is still the newest.</li>
+<li>(j): Similar to “(d)”</li>
+<li>(k): read in memory( or other cpu)</li>
+<li>(l): receive a “invalidate” message</li>
+</ul>
+<p>Examples are in the paper.</p>
+<h2 id="0x3-optimize-1-stores-result-in-unnecessary-stalls">0x3 Optimize 1: Stores Result in Unnecessary Stalls</h2>
+<p>Consider to modify a cache that isn’t in <strong>modified</strong> or <strong>exclusive</strong> state.</p>
+<p><img alt="Untitled" src="../../assets/0012-003-Untitled%203.2024_06_17_1718631337.png" /></p>
+<ul>
+<li><strong>Problem</strong>: there is no real reason to force CPU 0 to stall for so long — after all, regardless of what data happens to be in the cache line that CPU 1 sends it, CPU 0 is going to unconditionally overwrite it.</li>
+<li><strong>Solution</strong>: Add “store buffers” between each CPU and its cache<ul>
+<li>CPU0 write to its store buffer immediately</li>
+<li><strong>When CPU0 is acknowledged, the data will be moved from the store buffer to the cache line</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="0x31-store-forwarding-problem">0x31: Store Forwarding problem</h3>
+<p><img alt="Untitled" src="../../assets/0012-004-Untitled%204.2024_06_17_1718631343.png" /></p>
+<p>Thinking of the program below:</p>
+<ul>
+<li>CPU0 has value b</li>
+<li>CPU1 has value a = 0 in exclusive mode</li>
+</ul>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>a = 1;
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>b = a + 1;
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>assert(b == 2);
+</span></code></pre></div>
+<p>step1: cpu0 invalidate cpu1 with “a” , change private cache line to 1, and write it to store buffer.</p>
+<p>step2: cpu0 receive the value “a” from cpu1. The value is 0, and it’s stored in private cache.(Note that the value in the store buffer is 1)</p>
+<p>step3: cpu0 executes “b = a + 1”, load “a” from cache, and its value is 0</p>
+<p>step4: cpu0 store the value of “b” to cache, whose value is 1</p>
+<p>step5: cpu0 move the value of “a” from store buffer(1) to cache(0)</p>
+<p>step6: CPU0 executes assert(b==2), which fails.</p>
+<p>The problem is that we have two copies of “a”, one in the cache and the other in the store buffer.</p>
+<hr />
+<p>The hardware guys took pity and implemented “store forwarding”, where <strong>each CPU refers to (or “snoops”) its store buffer as well as its cache when performing loads</strong></p>
+<p><strong>In other words, a given CPU’s stores are directly forwarded to its subsequent loads, without hav- ing to pass through the cache.</strong></p>
+<p><img alt="Untitled" src="../../assets/0012-005-Untitled%205.2024_06_17_1718631351.png" /></p>
+<h3 id="0x32-store-buffers-and-memory-barriers">0x32 Store Buffers and Memory Barriers</h3>
+<p>Think of the program below</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>void foo(void)
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  a=1;
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  b=1;
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>}
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>void bar(void) {
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  while (b == 0) continue;
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  assert(a == 1);
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>}
+</span></code></pre></div>
+<ul>
+<li>cpu0 executes foo<ul>
+<li>own “b”</li>
+</ul>
+</li>
+<li>cpu1 executes bar<ul>
+<li>own “a”</li>
+</ul>
+</li>
+</ul>
+<hr />
+<p><img alt="Untitled" src="../../assets/0012-006-Untitled%206.2024_06_17_1718631356.png" /></p>
+<p>The problem is that, cpu1 reads “a” before being acknowledged that other cpus have changed it. Although CPU0 can continue to execute before writing it to stored buffer, but CPU1 doesn’t know that.</p>
+<p>The hardware designers cannot help directly here, since the <strong>CPUs have no idea which variables are related, let alone how they might be related</strong></p>
+<p>Therefore, the hardware designers provide <strong>memory-barrier</strong> instructions to allow the software to tell the CPU about such relations. The program fragment must be updated to contain the memory barrier:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>void foo(void)
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>{
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  a=1;
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  smp_mb();
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  b=1;
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>}
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>void bar(void)
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>{
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  while (b == 0) continue;
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  assert(a == 1);
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>}
+</span></code></pre></div>
+<p>The memory barrier <code>smp_mb()</code> will cause the CPU to flush its store buffer before applying subsequent stores to their cache lines. The CPU could either </p>
+<ul>
+<li>simply stall until the store buffer was empty before proceeding, or</li>
+<li>it could only use the store buffer to hold subsequent stores until all of the prior entries in the store buffer had been applied.<ul>
+<li>This is to prevent other cpus from getting the subsequent value before getting the prior entries</li>
+</ul>
+</li>
+</ul>
+<p>So that, CPU0 will</p>
+<ul>
+<li>wait for the “invalidate acknowledge” message of “a” before executing “b=1;”</li>
+</ul>
+<p>or </p>
+<ul>
+<li>(1)while executing <code>smp_mb</code> ,marks all current store-buffer entries (namely, the a=1)</li>
+<li>(2) while executing “b=1”, only stores it store buffer.</li>
+<li>(3) wait “invalidate acknowledge” of “a”</li>
+<li>(4) store the value of b in stored buffer and send a “invalidate” message</li>
+</ul>
+<h2 id="0x4-optimize-2-store-sequences-result-in-unnecessary-stalls">0x4 Optimize 2: Store Sequences Result in Unnecessary Stalls</h2>
+<ol>
+<li>Once the stored buffer is full or a memory barrier is encountered, the CPU must once again wait for invalidations to complete in order to drain its store buffer before it can continue executing</li>
+<li>invalidate acknowledge messages can take so long: they must ensure that the corre- sponding cache line is actually invalidated, and this invalidation can be delayed if the cache is busy, for example, if the CPU is intensively loading and storing data, all of which resides in the cache.</li>
+</ol>
+<p>However, the CPU need not actually invalidate the cache line before sending the acknowledgement.</p>
+<h3 id="0x42-invalidate-queues-and-invalidate-acknowledge">0x42 Invalidate Queues and Invalidate Acknowledge</h3>
+<p><img alt="Untitled" src="../../assets/0012-007-Untitled%207.2024_06_17_1718631364.png" /></p>
+<p><strong>A CPU with an invalidate queue may acknowledge an invalidate message as soon as it is placed in the queue, instead of having to wait until the corresponding line is actually invalidated.</strong></p>
+<h3 id="0x43-invalidate-queues-and-memory-barriers">0x43 Invalidate Queues and Memory Barriers</h3>
+<p>Thinking of the following code:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>void foo(void)
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  a=1;
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  smp_mb();
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  b=1;
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>}
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>void bar(void)
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>{
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  while (b == 0) continue;
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>  assert(a == 1);
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>}
+</span></code></pre></div>
+<ul>
+<li>CPU0:<ul>
+<li>execute foo</li>
+<li>a is shared state</li>
+<li>b is exclusive</li>
+</ul>
+</li>
+<li>CPU1:<ul>
+<li>execute bar</li>
+</ul>
+</li>
+</ul>
+<p><img alt="Untitled" src="../../assets/0012-008-Untitled%208.2024_06_17_1718631370.png" /></p>
+<ul>
+<li>Once again, the CPU designers cannot do much about this situation</li>
+<li>However, the memory-barrier instructions can interact with the invalidate queue.</li>
+</ul>
+<p>When a given CPU executes a memory barrier, it marks all the entries currently in its invalidate queue, and forces <strong>any subsequent load to wait until all marked entries have been applied to the CPU’s cache</strong>.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>void foo(void)
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>{
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  a=1;
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  smp_mb();
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  b=1;
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>}
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>void bar(void)
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>{
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>  while (b == 0) continue;
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>  smp_mb();
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>  assert(a == 1);
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>}
+</span></code></pre></div>
+<hr />
+<p>So that, CPU0 will</p>
+<ul>
+<li>(1) executes the <code>smp_mb()</code>, marking the entry in its invalidate queue.</li>
+<li>(2) start executing the assert(a==1), but a is in the invalidate queue, CPU 1 must stall this load until that entry in the invalidate queue has been applied.</li>
+</ul>
+<h2 id="0x5-summary-read-and-write-memory-barriers">0x5 Summary: Read and Write Memory Barriers</h2>
+<p>In the previous section, memory barriers were used to mark entries in both the store buffer and the inval- idate queue. <strong>But in our code fragment, foo() had no reason to do anything with the invalidate queue, and bar() similarly had no reason to do anything with the store queue.</strong></p>
+<p>Many CPU architectures therefore provide weaker memory-barrier instructions that do only one or the other of these two.</p>
+<ul>
+<li>read memory barrier:</li>
+<li>marks only the invalidate queue</li>
+<li>forces any subsequent <strong>load</strong> to wait until all marked entries have been applied from the <strong>invalidate queue</strong></li>
+<li>write memory barrier:</li>
+<li>marks only the store buffer.</li>
+<li>only use the store buffer to hold subsequent <strong>stores</strong> until all of the prior entries in the <strong>store buffer</strong> had been applied. </li>
+</ul>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>void foo(void)
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>{
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  a=1;
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  smp_wmb();
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  b=1;
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>}
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>void bar(void)
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>{
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>  while (b == 0) continue;
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>  smp_rmb();
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>  assert(a == 1);
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>}
+</span></code></pre></div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

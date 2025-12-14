@@ -1,0 +1,2268 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0010-paper_reading/0027-constant_recovery/">
+      
+      
+        <link rel="prev" href="../0026-20years-database/">
+      
+      
+        <link rel="next" href="../../0013-postgresql/0013-build_from_source/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>constant recovery with undo - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#0x0-backgroud" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              constant recovery with undo
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0007-zero2rsa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0011-roaring-bitmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0012-mesi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0x0-backgroud" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x0 backgroud
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x1-background-on-sql-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x1 BACKGROUND ON SQL SERVER
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x1 BACKGROUND ON SQL SERVER">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x11-databaserecovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x11 DatabaseRecovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x12-multi-versionconcurrencycontrol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x12 Multi-versionConcurrencyControl
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x2-constanttimerecovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x2 CONSTANTTIMERECOVERY
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x2 CONSTANTTIMERECOVERY">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x21-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x21 Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x22-three-transactional-operations-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x22 three transactional operations categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x22 three transactional operations categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x221-data-modifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x221 Data Modifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x222-system-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x222 System Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x223-logical-and-other-non-versioned-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x223 Logical and Other Non-versioned Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-persistent-version-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 Persistent Version Store
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x23 Persistent Version Store">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x231-in-row-version-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x231 In-row Version Store
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x232-off-row-version-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x232 Off-row Version Store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-logical-revert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 Logical Revert
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x23 Logical Revert">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x231-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x231 overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x232-transaction-state-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x232 Transaction State Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x233-short-transaction-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x233 Short Transaction Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x24-non-versioned-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x24 Non-versioned Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x24 Non-versioned Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x241-slog-a-secondary-log-stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x241 SLog: A Secondary Log Stream
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0017-pgvector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0024-index-in-pg/0025-hot-and-create-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0031-learn_rust/0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0x0-backgroud" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x0 backgroud
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x1-background-on-sql-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x1 BACKGROUND ON SQL SERVER
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x1 BACKGROUND ON SQL SERVER">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x11-databaserecovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x11 DatabaseRecovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x12-multi-versionconcurrencycontrol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x12 Multi-versionConcurrencyControl
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0x2-constanttimerecovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x2 CONSTANTTIMERECOVERY
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x2 CONSTANTTIMERECOVERY">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x21-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x21 Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x22-three-transactional-operations-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x22 three transactional operations categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x22 three transactional operations categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x221-data-modifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x221 Data Modifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x222-system-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x222 System Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x223-logical-and-other-non-versioned-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x223 Logical and Other Non-versioned Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-persistent-version-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 Persistent Version Store
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x23 Persistent Version Store">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x231-in-row-version-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x231 In-row Version Store
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x232-off-row-version-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x232 Off-row Version Store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x23-logical-revert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x23 Logical Revert
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x23 Logical Revert">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x231-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x231 overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x232-transaction-state-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x232 Transaction State Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x233-short-transaction-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x233 Short Transaction Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x24-non-versioned-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x24 Non-versioned Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0x24 Non-versioned Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0x241-slog-a-secondary-log-stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0x241 SLog: A Secondary Log Stream
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>constant recovery with undo</h1>
+
+<h2 id="0x0-backgroud">0x0 backgroud</h2>
+<p>Even though ARIES simplifies the recovery process and allows it to be generic for all transactional operations, <strong>recovering the database to a consistent state requires undoing all operations performed by uncommitted transactions</strong> which makes the cost of recovery proportional to the work performed by these transactions. This significantly impacts database availability since <strong>recovering a long running transaction can take several hours</strong>.</p>
+<p>This paper describes the overall design of “<strong>Constant Time Recovery</strong>” (CTR) </p>
+<p><strong>Recovering the database to a consistent state requires undoing all operations performed by uncommitted transactions, and recovering a long running transaction can take several hours</strong></p>
+<h2 id="0x1-background-on-sql-server"><strong>0x1 BACKGROUND ON SQL SERVER</strong></h2>
+<h3 id="0x11-databaserecovery"><strong>0x11 DatabaseRecovery</strong></h3>
+<p><strong>Following ARIES</strong>, the SQL Server recovery process has three distinct phases. Figure 2 demonstrates these phases and the portion of the log they process.</p>
+<p><img alt="Untitled" src="../../assets/0027-002-Untitled.2024_08_08_1723123875.png" /></p>
+<p>(The oldest transaction can run across many checkpoints)</p>
+<ul>
+<li>analysis: identifys:</li>
+<li>any transactions that must be rolled back</li>
+<li>LSN of the oldest dirty page in the system<ul>
+<li>Checkpoint process captured all active transactions and the oldest dirty page LSN at the time of the checkpoint, so analysis can start from that</li>
+</ul>
+</li>
+<li>redo: <strong>bringing the database back to the state it was at the time of the failure:</strong></li>
+<li>Since Analysis has recomputed the <strong>Oldest Dirty Page LSN</strong>, Redo should only process the log from this point.<ul>
+<li>Only applies the operation if the Page LSN is lower</li>
+</ul>
+</li>
+<li>Processes the log starting from the beginning of the <strong>oldest active transaction</strong>.<ul>
+<li>This allows recovery to <strong>reacquire all the locks held by active transactions</strong> and make the database <strong>available at the end of Redo for improved availability</strong></li>
+</ul>
+</li>
+<li>undo: <strong>rolling back any transactions that were active at the time of the failure.</strong></li>
+<li>As Redo has reacquired the locks required by these transactions, the Undo process can be performed while the database is available and user queries will be blocked only <strong>if they attempt to access the data modified by the transactions pending undo</strong>.</li>
+<li>Undoing these operations is also logged using Compensation Log Records (<strong>CLR</strong>) to guarantee that the database is recoverable even after a failure in the middle of the Undo process</li>
+</ul>
+<h3 id="0x12-multi-versionconcurrencycontrol"><strong>0x12 Multi-versionConcurrencyControl</strong></h3>
+<p>Versioning is performed at the row level: for every user data update, <strong>SQL Server updates the row in-place in the data page and pushes the old version of the row to an append-only version store</strong>, linking the current row version to the previous version</p>
+<p>The versions are linked to each other using their physical locator</p>
+<p><img alt="image-20240808213734702" src="../../assets/0027-001-image-20240808213734702.2024_08_08_1723124263.png" /></p>
+<p>Given that these versions are only used for the purposes of SI, the version store doesn’t need to be preserved across restarts and is stored in SQL Server’s “TempDB”, a system database that is recycled every time the SQL Server process restarts. This allows for efficient version generation, as these operations are not logged.</p>
+<h2 id="0x2-constanttimerecovery"><strong>0x2 CONSTANTTIMERECOVERY</strong></h2>
+<h3 id="0x21-overview">0x21 <strong>Overview</strong></h3>
+<ul>
+<li>Database recovery in constant time, regardless of the user workload and transaction sizes.</li>
+<li>Transaction rollback in constant time regardless of the transaction size.</li>
+<li>Continuous transaction log truncation, even in the presence of long running transactions.</li>
+</ul>
+<p>CTR achieves these by separating transactional operations into three distinct categories and handling their recovery using the most appropriate mechanism.</p>
+<h3 id="0x22-three-transactional-operations-categories">0x22 three transactional operations categories</h3>
+<h4 id="0x221-data-modifications">0x221 Data Modifications</h4>
+<p>All data modifications are versioned, storing the earlier versions of each row in <strong>the version store that is now redesigned to be persistent and recoverable</strong></p>
+<p>（笑死我了，刚刚还在感叹 version store 无需记录，重启即删多么方便）</p>
+<p>When a transaction rolls back, it is simply marked as “aborted”, indicating that any new transactions should ignore the versions generated by this transaction and access the earlier committed versions</p>
+<p>During database recovery</p>
+<ul>
+<li>Analysis identifies the state of every transaction</li>
+<li><strong>Redo recovers the row and the version store</strong> content as of the time of the failure.</li>
+<li><strong>Undo marks the uncommitted transactions as aborted</strong> making all updates by these
+  transactions invisible.<ul>
+<li>This allows Undo to complete in constant time, regardless of the transaction sizes.</li>
+<li>（仍然和 aborted xact count 相关，但相比于 modified row count，几乎可以忽略不计）</li>
+</ul>
+</li>
+</ul>
+<h4 id="0x222-system-operations">0x222 System Operations</h4>
+<p>System operations refer to internal operations the DBMS uses to maintain its internal data structures, such as space allocation and deallocation, B-Tree page splits, etc.</p>
+<ul>
+<li>difficulty:</li>
+<li>These operations cannot be easily versioned</li>
+<li>Additionally, these operations are usually tied to user data modifications and can be a significant percentage of the operations performed by a long-running transaction.<ul>
+<li>For example, a large data load allocates a large number of pages</li>
+</ul>
+</li>
+<li>Solution:</li>
+<li>These operations are always performed by short-lived, system transactions that update the internal data structures and immediately commit</li>
+<li><strong>When a failure occurs, these operations will not be undone, but the allocated space and other updated data structures will be lazily reclaimed and fixed up in the background.</strong></li>
+</ul>
+<h3 id="0x223-logical-and-other-non-versioned-operations">0x223 Logical and Other Non-versioned Operations</h3>
+<p>This last category refers to operations that cannot be versioned because they are either:</p>
+<ul>
+<li>logical: such as</li>
+<li>lock acquisition operations that indicate that a certain lock must be acquired during recovery</li>
+<li>cache invalidation operations that are responsible for invalidating in-memory caches when a transaction rolls back</li>
+<li>they are modifying data structures that need to be accessed during start up</li>
+<li>must maintain a very specific format that does not allow versioning
+    CTR leverages an additional log stream, SLog, that allows tracking only the relevant operations and not having to process the full transaction log for the corresponding transactions.</li>
+</ul>
+<h3 id="0x23-persistent-version-store">0x23 Persistent Version Store</h3>
+<p>Persistent Version Store (PVS) allows <strong>row versions to be recoverable</strong> by storing them in the user database and <strong>logging them in the transaction log as regular user</strong> data.</p>
+<ul>
+<li>Hence, at the end of Redo all versions are fully recovered and can be accessed by user transactions</li>
+</ul>
+<h4 id="0x231-in-row-version-store">0x231 In-row Version Store</h4>
+<p>Since in most cases the difference between the two versions is small (for example when only a few columns are updated), we can simply store the diff between the two versions</p>
+<ul>
+<li>Even though computing and reapplying the diff requires additional CPU cycles, the cost of generating an off-row version, by accessing another page and logging the version as a separate operation, is significantly higher （再读另一个页代价更大）</li>
+</ul>
+<p>![[attachments/Pasted image 20240714101730.png]]</p>
+<p>（ diff 怎么存储呢？定长的 id 字段可能不够！）</p>
+<p>Despite its benefits in most common cases, in-row versioning can negatively impact the performance of the system if it significantly increases the size of rows in the data pages. This is particularly problematic for B-Trees as it can lead to page splits. （diff 会占用大量空间，引起 page 数量膨胀，B树分裂代价高 ）</p>
+<h4 id="0x232-off-row-version-store">0x232 Off-row Version Store</h4>
+<p>It is implemented as an internal table that has no indexes since all version accesses are based on the version’s physical locator (Page Id, Slot Id) （纯 heap，无索引）</p>
+<p>Each version of user data is stored as a separate row in this table, having some columns for persisting version metadata and a generic binary column that contains the full version content, regardless of the schema of the user table this version belongs to. （存全量数据，而不仅是 diff)</p>
+<p>By leveraging regular logging, off-row PVS is recovered using the traditional recovery mechanisms</p>
+<h3 id="0x23-logical-revert">0x23 Logical Revert</h3>
+<h4 id="0x231-overview">0x231 overview</h4>
+<p>CTR leverages the PVS to instantly roll back data modifications.</p>
+<p>When a query accesses a row, it first checks the state (active, committed or aborted) of the transaction that generated the latest version.</p>
+<ul>
+<li>If the transaction is active or has been committed: visibility depends on the query isolation level. （ 事务提交，则看第一个 version ）</li>
+<li>but if the transaction is aborted, this version is definitely not visible and the query traverses the version chain to identify the version that belongs to a committed transaction and is visible. （ 事务回滚，则遍历 version chain ）</li>
+</ul>
+<p>Additionally, if a new transaction updates a row with an aborted version, it must first revert the effects of the aborted transaction before proceeding with the update. （ 做完 redo 后，the latest version 可能是 abort 状态，真正有效的 version 在 version chain 中，所以需要修复 the latest version ）</p>
+<p>CTR implements two different mechanisms for reverting the updates performed by aborted transactions:</p>
+<p><strong>Logical Revert</strong> is the process of bringing the committed version of a row back to the main row in the data page,</p>
+<ul>
+<li>so that all queries can access it directly and versions in the version store are no longer required</li>
+<li>This process compares the state of the aborted and committed versions and performs <strong>the required compensating operation</strong></li>
+<li>the revert operations are not versioned</li>
+<li>Since these transactions only revert a row at a time, they are guaranteed to be short-lived and don’t affect recovery time.</li>
+<li>Logical Revert <strong>is used by a background cleanup process</strong> to eliminate all updates performed by aborted transactions and eventually remove the aborted transactions from the system.
+  ![[attachments/Pasted image 20240714110353.png]]</li>
+</ul>
+<p><strong>overwrite</strong> the aborted version with the new version it is generating</p>
+<ul>
+<li>This process minimizes the overhead for these operations and allows them to be almost as fast as if there was no aborted version.
+  ![[attachments/Pasted image 20240714110439.png]]</li>
+</ul>
+<p>In CTR, the database is fully available, releasing all locks, while row versions are lazily cleaned up in the background.</p>
+<h4 id="0x232-transaction-state-management">0x232 Transaction State Management</h4>
+<p>For SI, visibility depends on the commit timestamp of the transaction that generated the version. Since SQL Server does not allow snapshot transactions to span server restarts, the commit timestamps can be stored in memory and need not be recovered. <strong>CTR, however, requires tracking the state of aborted transactions until all their versions have been logically reverted and are no longer accessible.</strong></p>
+<p>CTR stores the aborted transaction information in the “<strong>Aborted Transaction Map</strong>” (ATM)</p>
+<p>Restore ATM after crash:</p>
+<ul>
+<li>When a transaction aborts, before releasing any locks, it will add its Transaction Id to the ATM and generate an “ABORT” log record indicating that it was aborted. （产生 ATM 信息）</li>
+<li>When a checkpoint occurs, the full content of the ATM is serialized into the transaction log as part of the checkpoint information. （ checkpoint 整理 ATM 信息 ）</li>
+<li>Since Analysis starts processing the log from the Checkpoint Begin LSN of the last successful checkpoint, or earlier, it will process this information regarding the aborted transactions and reconstruct the ATM. （ analysis 根据 checkpoint 重建 ATM ）</li>
+<li>Any transactions that aborted after the last checkpoint will not be included in the checkpoint, but Analysis will process their ABORT log records and add them to the map （ analysis 分析 checkpoint 后面事务的 ABORT log，并写入 ATM ）</li>
+</ul>
+<p>Following this process, Analysis can reconstruct the ATM as of the time of the failure, so that it is available when the database becomes available at the end of Redo.</p>
+<p>Once all versions generated by an aborted transaction have been reverted, the transaction is no longer interesting for recovery and can be removed from the ATM.</p>
+<p>Removing a transaction is also a logged operation, using a “FORGET” log record, to guarantee that the content of the ATM is recovered correctly. （Removing from ATM 也要新加日志？这也太复杂了。。。。）</p>
+<h4 id="0x233-short-transaction-optimization">0x233 Short Transaction Optimization</h4>
+<p>Maintaining the <strong>Aborted Transaction Map</strong> and forcing queries to visit additional versions incur a performance penalty, <strong>short OLTP transactions as they would significantly increase the size of the ATM</strong></p>
+<p>When a transaction attempts to roll back, we evaluate the <strong>number of operations</strong> it performed and the <strong>amount of log</strong> it generated and qualify it as “short” if these don’t exceed certain thresholds.</p>
+<p>Short transactions will not go through the CTR rollback process, <strong>but use traditional undo</strong>, so that they are immediately removed from the system.
+（ 太多短事务导致 ATM 膨胀，解决方案为混用 CTR 和 undo？这么复杂么？ ）</p>
+<h3 id="0x24-non-versioned-operations">0x24 Non-versioned Operations</h3>
+<p>A variety of operations that cannot be versioned because they are:</p>
+<ul>
+<li>Logical: such as</li>
+<li>acquiring coarse-grained locks</li>
+<li>invalidating various caches when a transaction rolls back</li>
+<li>accumulating row and page statistics</li>
+<li>Updating system metadata in data structures</li>
+<li>Updating critical system metadata required for starting up the database, before recovery can reconstruct versioning information, such as updates to the “boot page”, a special page that contains the core information required for initialization.（ ？这些东西还能做成page？，还有版本管理？这就是商业数据么？ ）</li>
+</ul>
+<p>To handle these operations while guaranteeing recovery in constant time, we are leveraging two different mechanisms:</p>
+<h4 id="0x241-slog-a-secondary-log-stream">0x241 SLog: A Secondary Log Stream</h4>
+<p>SLog is a secondary log stream designed to <strong>only track non-versioned operations that must be redone or undone using information from the corresponding log records</strong>.</p>
+<p>For example, when altering the data type of a column in a large table, the transaction will have to update millions of rows, but SLog will only contain a handful log records, for acquiring the exclusive lock and invalidating metadata caches.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
