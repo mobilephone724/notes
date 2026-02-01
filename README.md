@@ -65,3 +65,33 @@ The format of the repo:
 8 directories, 27 files
 ```
 
+In macos: I management my markdown docs with the structure like
+```
+subdir_path
+\__ doc_1
+    \__ assets (store images or other assets related to doc_1)
+    \__ doc_1.md
+    \__ doc_3 (optional)
+        \__ assets
+        \__ doc_3.md
+        \__ may be more subdirs
+\__ doc_2
+    \__ assets
+    \__ doc_2.md
+    \__ may be more subdirs
+\__ may be more subdirs
+```
+
+It is very convenient to move a single doc with its assets together. But when I 
+want to (1) split a doc into others manually (2) merge some docs into one, I
+need to update the paths of assets in the markdown files manually.
+
+But luckily, I can confirm that all the image name in markdown files are unique,
+so write me a script to update the paths of images in markdown files automatically
+is easy.
+
+What I want is like `refresh_img_path.py`, which scans all the markdown files in current
+dictory and its subdirectories, find all the images used in these markdown files. If one
+image is not found in the `assets` subdirectory of the markdown file, search it in the whole
+repo, and copy the image to the `assets` subdirectory. I can ensure the image ref path in
+markdown file is always `![](./asset/xxx)`
