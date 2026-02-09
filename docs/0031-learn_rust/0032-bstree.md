@@ -35,7 +35,7 @@ struct BstreeNode<T> {
 
 还记得 [cloudflare 的崩溃事件么](https://blog.cloudflare.com/18-november-2025-outage/) ，在 Option 中无脑使用 `unwrap()` 获取其中的变量可能会导致崩溃。
 
-![](attachments/Pasted%20image%2020251210232151.png)
+![](./assets/Pasted%20image%2020251210232151.png)
 
 并且根据一些工程实践，代码中应该完全禁用 `unwrap()` ，为此， rust 给了一个 `Some()` 语法用于获取 `Option` 中的值，例如
 

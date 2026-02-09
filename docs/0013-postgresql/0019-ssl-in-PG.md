@@ -113,7 +113,7 @@ And (re)start the server
 psql "host=127.0.0.1 port=5432 dbname=postgres user=postgres sslmode=require"
 ```
 
-![Untitled](https://raw.githubusercontent.com/mobilephone724/blog_pictures/master/tls-connection.2024_02_12_1707741369.png)
+![Untitled](./assets/tls-connection.2024_02_12_1707741369.20260209_222852.png)
 
 ## Server sides Authorization
 

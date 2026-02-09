@@ -240,4 +240,3 @@ pub fn file_compress(
 -   `compress(&contents)?`: `compress` returns a `Result<Vec<u8>, String>`. If it's an error, `?` will convert the `String` into a `FileCompressError::Internal` (using our other `From` implementation) and return from the function.
 
 **Why?** The function is now much cleaner. We've removed the manual error mapping (`.map_err(...)`) and can use `?` on any function that returns a `Result` with an error type that can be converted into our `FileCompressError`. This makes the code more readable and maintainable.
-![alt text](assets/img_2026-01-20T13:57:11.833Z.png)
