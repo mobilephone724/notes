@@ -1,0 +1,3111 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0010-paper_reading/0033-ssi-in-pg/">
+      
+      
+        <link rel="prev" href="../0027-constant_recovery/">
+      
+      
+        <link rel="next" href="../../0013-postgresql/0013-build_from_source/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>0033 ssi in pg - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#postgresql-ssi-serializable-snapshot-isolation" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              0033 ssi in pg
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0007-zero2rsa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0011-roaring-bitmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0012-mesi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0027-constant_recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0033 ssi in pg
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0033 ssi in pg
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-ssi-si" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么我们需要 SSI？从 SI 的局限性说起
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. 为什么我们需要 SSI？从 SI 的局限性说起">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-snapshot-isolation-si" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 什么是 Snapshot Isolation (SI)？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-si-write-skew" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 SI 搞不定的异常：写偏斜 (Write Skew)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 理论核心：如何证明“危险结构”？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 理论核心：如何证明“危险结构”？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 依赖图与边的类型
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-rw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 为什么必须是两条相邻的 rw 边？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-postgresql-ssi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. PostgreSQL 的 SSI 实现架构
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. PostgreSQL 的 SSI 实现架构">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-siread-lock-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 全新的 SIREAD Lock Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-rw-conflict-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 冲突检测机制 (RW-Conflict Detection)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.2 冲突检测机制 (RW-Conflict Detection)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-write-before-read-mvcc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. 检测 Write-before-Read (利用 MVCC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-read-before-write-siread-locks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. 检测 Read-before-Write (利用 SIREAD Locks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 挑战与解决方案
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 挑战与解决方案">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-bounded-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 内存爆炸 (Bounded Memory)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-safe-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 假阳性与 Safe Retry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 针对只读事务的优化
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 针对只读事务的优化">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-safe-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Safe Snapshots (安全快照)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-deferrable-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Deferrable Transactions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 性能总结
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 总结
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0017-pgvector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0024-index-in-pg/0025-hot-and-create-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0031-learn_rust/0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0031-learn_rust/0033-haffman-compress/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Experience with Huffman Compression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 llm cousre
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 10 llm cousre
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 1 how transformers work
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 10 1 how transformers work
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-10-1-how-transformers-work/2026-01-10-1-how-transformers-work/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 1 how transformers work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 11:56:52 how transformers solve tasks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 10 11:56:52 how transformers solve tasks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-10-11%3A56%3A52-how-transformers-solve-tasks/2026-01-10-11%3A56%3A52-how-transformers-solve-tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 11:56:52 how transformers solve tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 26 21:27:37 Transformer Architectures
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 26 21:27:37 Transformer Architectures
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-26-21%3A27%3A37-Transformer-Architectures/2026-01-26-21%3A27%3A37-Transformer-Architectures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 26 21:27:37 Transformer Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_4" id="__nav_6_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 09:22:39 inference with llms
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 31 09:22:39 inference with llms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-31-09%3A22%3A39-inference_with_llms/2026-01-31-09%3A22%3A39-inference_with_llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 09:22:39 inference with llms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 10:36:39 kvcache
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 31 10:36:39 kvcache
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-31-10%3A36%3A39-kvcache/2026-01-31-10%3A36%3A39-kvcache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 10:36:39 kvcache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:37:21 bias
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 02 01 09:37:21 bias
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-02-01-09%3A37%3A21-bias/2026-02-01-09%3A37%3A21-bias/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:37:21 bias
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:46:39 behind the pipeline
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 02 01 09:46:39 behind the pipeline
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-02-01-09%3A46%3A39-behind_the_pipeline/2026-02-01-09%3A46%3A39-behind_the_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:46:39 behind the pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:57:21 uv commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 02 01 09:57:21 uv commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-02-01-09%3A57%3A21-uv_commands/2026-02-01-09%3A57%3A21-uv_commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:57:21 uv commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-ssi-si" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么我们需要 SSI？从 SI 的局限性说起
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. 为什么我们需要 SSI？从 SI 的局限性说起">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-snapshot-isolation-si" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 什么是 Snapshot Isolation (SI)？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-si-write-skew" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 SI 搞不定的异常：写偏斜 (Write Skew)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 理论核心：如何证明“危险结构”？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 理论核心：如何证明“危险结构”？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 依赖图与边的类型
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-rw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 为什么必须是两条相邻的 rw 边？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-postgresql-ssi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. PostgreSQL 的 SSI 实现架构
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. PostgreSQL 的 SSI 实现架构">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-siread-lock-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 全新的 SIREAD Lock Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-rw-conflict-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 冲突检测机制 (RW-Conflict Detection)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.2 冲突检测机制 (RW-Conflict Detection)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-write-before-read-mvcc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. 检测 Write-before-Read (利用 MVCC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-read-before-write-siread-locks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. 检测 Read-before-Write (利用 SIREAD Locks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 挑战与解决方案
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 挑战与解决方案">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-bounded-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 内存爆炸 (Bounded Memory)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-safe-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 假阳性与 Safe Retry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 针对只读事务的优化
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 针对只读事务的优化">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-safe-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Safe Snapshots (安全快照)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-deferrable-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Deferrable Transactions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 性能总结
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 总结
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<p>这是一篇针对 PostgreSQL 内核研发团队定制的深度技术分享博客。基于你提供的论文《Serializable Snapshot Isolation in PostgreSQL》以及你的补充要求（详细解释 Write Skew、SI 定义及危险结构的理论证明），我重新梳理了内容。</p>
+<p>这篇文档旨在作为组内分享的讲稿大纲，保持了工业界的务实风格，兼顾理论深度与工程实现的 Trade-off。</p>
+<hr />
+<h1 id="postgresql-ssi-serializable-snapshot-isolation">PostgreSQL 内核分享：SSI (Serializable Snapshot Isolation) 原理、证明与实现</h1>
+<p><strong>Author:</strong> Kernel Dev Team</p>
+<p><strong>Target:</strong> PostgreSQL 9.1+ Kernel Architecture</p>
+<p><strong>Ref:</strong> <em>Serializable Snapshot Isolation in PostgreSQL (VLDB '12)</em></p>
+<h2 id="1-ssi-si">1. 为什么我们需要 SSI？从 SI 的局限性说起</h2>
+<p>在深入代码之前，我们需要对齐两个核心概念：<strong>Snapshot Isolation (SI)</strong> 和 <strong>Write Skew (写偏斜)</strong>。这也是 SSI 诞生的原点。</p>
+<h3 id="11-snapshot-isolation-si">1.1 什么是 Snapshot Isolation (SI)？</h3>
+<p>在 PostgreSQL 中，<code>REPEATABLE READ</code> 隔离级别对应就是标准的 SI。</p>
+<ul>
+<li><strong>定义：</strong> 事务 <span class="arithmatex">\(T\)</span> 在启动（或第一条语句）时创建一个快照（Start-Timestamp）。事务内的所有读操作，都只能看到该时间点之前已提交的数据。</li>
+<li><strong>写规则（First-Committer-Wins）：</strong> 如果 <span class="arithmatex">\(T_1\)</span> 和 <span class="arithmatex">\(T_2\)</span> 并发修改同一行数据，先提交者成功，后者必须 Abort（在 PG 中通过 Tuple Lock 和 Update 时的 Xmax 检查实现）。</li>
+<li><strong>优势：</strong> 读写互不阻塞，避免了脏读、不可重复读和幻读（PG 的 SI 实现通过快照可见性天然避免了幻读）。</li>
+</ul>
+<h3 id="12-si-write-skew">1.2 SI 搞不定的异常：写偏斜 (Write Skew)</h3>
+<p>虽然 SI 看起来很完美，但它允许一种被称为“写偏斜”的异常，导致数据破坏。</p>
+<p><strong>经典案例：医生值班 (Doctors Duty)</strong></p>
+<p>假设规则：医院至少需要一名医生值班。</p>
+<p>当前状态：Alice 和 Bob 都在值班。</p>
+<table>
+<thead>
+<tr>
+<th><strong>Transaction T1 (Alice)</strong></th>
+<th><strong>Transaction T2 (Bob)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IF count(on_call) &gt;= 2</code> (读到 2)</td>
+<td><code>IF count(on_call) &gt;= 2</code> (读到 2)</td>
+</tr>
+<tr>
+<td><code>UPDATE doctors SET on_call = false WHERE name = 'Alice'</code></td>
+<td><code>UPDATE doctors SET on_call = false WHERE name = 'Bob'</code></td>
+</tr>
+<tr>
+<td><strong>Commit</strong></td>
+<td><strong>Commit</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>在 SI 下：</strong> <span class="arithmatex">\(T_1\)</span> 和 <span class="arithmatex">\(T_2\)</span> 读的都是事务开始时的快照（都有2人值班）。且 <span class="arithmatex">\(T_1\)</span> 修改的是 Alice 的行，<span class="arithmatex">\(T_2\)</span> 修改的是 Bob 的行。<strong>没有写冲突（WW-Conflict）</strong>，所以两者都能提交。</li>
+<li><strong>结果：</strong> 0 人值班。违反了业务约束。</li>
+<li><strong>本质：</strong> 两个事务读取了<strong>重叠</strong>的数据集合，但修改了<strong>不相交</strong>的数据集合。S2PL（两阶段锁）可以通过共享锁阻塞写锁来避免此问题，但 SI 无法检测。</li>
+</ul>
+<h2 id="2">2. 理论核心：如何证明“危险结构”？</h2>
+<p>SSI 的核心不在于“全量检测环”，而在于“检测可能形成环的结构”。这基于 Fekete 等人的理论发现。</p>
+<h3 id="21">2.1 依赖图与边的类型</h3>
+<p>我们将历史看作一个图，节点是事务，边代表依赖关系（操作顺序）：</p>
+<ol>
+<li><strong>wr-dependency (写读依赖):</strong> <span class="arithmatex">\(T_1\)</span> 写，<span class="arithmatex">\(T_2\)</span> 读到了 <span class="arithmatex">\(T_1\)</span> 的版本。意味着 <span class="arithmatex">\(T_1\)</span> 在 <span class="arithmatex">\(T_2\)</span> 之前。</li>
+<li><strong>ww-dependency (写写依赖):</strong> <span class="arithmatex">\(T_1\)</span> 写，<span class="arithmatex">\(T_2\)</span> 覆盖了 <span class="arithmatex">\(T_1\)</span> 的版本。意味着 <span class="arithmatex">\(T_1\)</span> 在 <span class="arithmatex">\(T_2\)</span> 之前。</li>
+<li><strong>rw-antidependency (读写反向依赖):</strong> <span class="arithmatex">\(T_1\)</span> 读了一个旧版本，<span class="arithmatex">\(T_2\)</span> 随后（或并发）生成了新版本。</li>
+<li><strong>关键点：</strong> 在串行化顺序中，因为 <span class="arithmatex">\(T_1\)</span> 没看到 <span class="arithmatex">\(T_2\)</span> 的修改，所以 <span class="arithmatex">\(T_1\)</span> 看起来像是在 <span class="arithmatex">\(T_2\)</span> 之前执行的。但实际上 <span class="arithmatex">\(T_2\)</span> 是并发或稍后运行的。我们记作 <span class="arithmatex">\(T_1 \xrightarrow{rw} T_2\)</span>。</li>
+</ol>
+<h3 id="22-rw">2.2 为什么必须是两条相邻的 rw 边？</h3>
+<p><strong>定理：</strong> 任何序列化异常（图中的环）必然包含结构 <span class="arithmatex">\(T_1 \xrightarrow{rw} T_2 \xrightarrow{rw} T_3\)</span>。</p>
+<p><strong>推导证明逻辑 (Proof Intuition)：</strong></p>
+<ol>
+<li><strong>环的存在性：</strong> 如果存在异常，图中一定有环。</li>
+<li><strong>边的性质：</strong></li>
+<li><code>wr</code> 和 <code>ww</code> 边通常意味着时间上的先后顺序。如果 <span class="arithmatex">\(T_1 \to T_2\)</span> 是 wr 或 ww 关系，通常意味着 <span class="arithmatex">\(T_1\)</span> 在 <span class="arithmatex">\(T_2\)</span> 开始前（或提交前）已经提交了。它们符合正常的“时间流向”。</li>
+<li><code>rw</code> 边是唯一允许“时间倒流”或“并发交错”的边。<span class="arithmatex">\(T_1\)</span> 读旧数据，<span class="arithmatex">\(T_2\)</span> 写新数据。虽然逻辑上 <span class="arithmatex">\(T_1\)</span> 在前，但物理时间上 <span class="arithmatex">\(T_2\)</span> 可能正在并发运行甚至已经提交。</li>
+<li><strong>Adya 的发现：</strong> 一个环里至少得有两条 <code>rw</code> 边。如果只有 wr/ww，整个图就是时间顺流的，构不成环。</li>
+<li><strong>Fekete 的发现 (关键)：</strong> 这两条 <code>rw</code> 边必须是<strong>相邻</strong>的。</li>
+<li>假设环中有 <span class="arithmatex">\(T_1 \xrightarrow{rw} T_2 \to \dots \to T_3 \xrightarrow{rw} T_1\)</span>。</li>
+<li>如果 <span class="arithmatex">\(T_2\)</span> 到 <span class="arithmatex">\(T_3\)</span> 之间全是 wr/ww 边，这意味着 <span class="arithmatex">\(T_2\)</span> 必须在 <span class="arithmatex">\(T_3\)</span> 之前提交。</li>
+<li>而 <span class="arithmatex">\(T_1 \xrightarrow{rw} T_2\)</span> 意味着 <span class="arithmatex">\(T_1\)</span> 和 <span class="arithmatex">\(T_2\)</span> 必须并发（或 <span class="arithmatex">\(T_2\)</span> 稍后）。</li>
+<li><strong>结论：</strong> 只有当 <span class="arithmatex">\(T_2\)</span> 既有一个入度 rw 边（被别人读了旧版本），又有一个出度 rw 边（读了别人的旧版本）时，才可能作为环的“枢纽”将时间线扭曲成环。</li>
+</ol>
+<p>这个结构被称为 <strong>Dangerous Structure</strong>。</p>
+<div class="arithmatex">\[T_{in} \xrightarrow{rw} T_{pivot} \xrightarrow{rw} T_{out}\]</div>
+<p>SSI 的算法本质：<strong>在运行时检测这种“双 rw 边”结构，并 Abort 其中一个事务。</strong></p>
+<h2 id="3-postgresql-ssi">3. PostgreSQL 的 SSI 实现架构</h2>
+<p>要在 PG 中实现 SSI，我们需要解决两个工程问题：如何检测读写冲突？如何管理内存？</p>
+<h3 id="31-siread-lock-manager">3.1 全新的 SIREAD Lock Manager</h3>
+<p>PG 原有的 Lock Manager (Heavyweight) 和 Tuple Lock 都不适用，因为它们会阻塞。SSI 需要一种非阻塞的、仅用于追踪的锁。</p>
+<p>我们在 <code>predicate.c</code> 中实现了 <strong>SSI Lock Manager</strong>。</p>
+<ul>
+<li><strong>SIREAD Locks:</strong> 当事务读取数据时获取。</li>
+<li><strong>特点:</strong> 不阻塞写，仅记录“<span class="arithmatex">\(T_x\)</span> 读取了 Tuple/Page/Relation <span class="arithmatex">\(Y\)</span>”。</li>
+<li><strong>持久性:</strong> 锁必须在事务提交后依然保留（因为 <span class="arithmatex">\(T_{out}\)</span> 可能还没结束）。</li>
+</ul>
+<h3 id="32-rw-conflict-detection">3.2 冲突检测机制 (RW-Conflict Detection)</h3>
+<p>检测分为两个方向，利用了 PG 现有的 MVCC 机制和新的锁表。</p>
+<h4 id="a-write-before-read-mvcc">A. 检测 Write-before-Read (利用 MVCC)</h4>
+<p>场景：<span class="arithmatex">\(T_{committed}\)</span> 已经写了数据，<span class="arithmatex">\(T_{current}\)</span> 正在读。</p>
+<ul>
+<li><strong>机制：</strong> 当 <span class="arithmatex">\(T_{current}\)</span> 扫描 Heap Tuple 时，通过可见性检查（<code>HeapTupleSatisfiesMVCC</code>）。</li>
+<li><strong>判定：</strong> 如果发现 Tuple 的 <code>xmin</code> 是并发事务 <span class="arithmatex">\(T_{committed}\)</span> 且已提交，但在 <span class="arithmatex">\(T_{current}\)</span> 的快照中不可见 -&gt; 说明 <span class="arithmatex">\(T_{committed}\)</span> 更新了数据但 <span class="arithmatex">\(T_{current}\)</span> 读了旧版本。</li>
+<li><strong>动作：</strong> 记录 <span class="arithmatex">\(T_{current} \xrightarrow{rw} T_{committed}\)</span>。</li>
+<li><strong>优势：</strong> <strong>零内存开销</strong>，直接利用 Tuple Header 信息。</li>
+</ul>
+<h4 id="b-read-before-write-siread-locks">B. 检测 Read-before-Write (利用 SIREAD Locks)</h4>
+<p>场景：<span class="arithmatex">\(T_{reader}\)</span> 已经读了数据，<span class="arithmatex">\(T_{writer}\)</span> 想要修改。</p>
+<ul>
+<li><strong>机制：</strong> 当 <span class="arithmatex">\(T_{writer}\)</span> 执行 <code>UPDATE/DELETE</code> 时，去 SSI Lock Manager 查询。</li>
+<li><strong>判定：</strong> 检查谁持有该 Tuple/Page 的 SIREAD Lock。</li>
+<li><strong>动作：</strong> 发现锁持有者 <span class="arithmatex">\(T_{reader}\)</span>，记录 <span class="arithmatex">\(T_{reader} \xrightarrow{rw} T_{writer}\)</span>。</li>
+<li><strong>注意：</strong> 如果是索引扫描，会加索引页锁或 Relation 锁，以此来模拟 Predicate Locking（解决幻读）。</li>
+</ul>
+<h2 id="4">4. 挑战与解决方案</h2>
+<h3 id="41-bounded-memory">4.1 内存爆炸 (Bounded Memory)</h3>
+<p>SSI 需要追踪已提交事务的锁，这在长事务场景下极易撑爆共享内存。</p>
+<ul>
+<li><strong>Safe Snapshots:</strong> (详见下文) 快速释放只读事务的锁。</li>
+<li><strong>粒度提升 (Granularity Promotion):</strong> 如果一个 Page 上的 Tuple 锁太多，升级为 Page 锁；Page 锁太多，升级为 Relation 锁。这会增加假阳性（False Positives），但保证了内存有界。</li>
+<li><strong>Aggressive Cleanup:</strong> 一旦确定某事务不可能参与到环中（例如所有并发事务都结束了），立即清理。</li>
+<li><strong>Summarization:</strong> 对极老的已提交事务，将其压缩为摘要信息，只保留“是否有冲突”的标记。</li>
+</ul>
+<h3 id="42-safe-retry">4.2 假阳性与 Safe Retry</h3>
+<p>检测到危险结构 <span class="arithmatex">\(T_1 \to T_2 \to T_3\)</span> 不代表一定有环（可能 <span class="arithmatex">\(T_3\)</span> 在 <span class="arithmatex">\(T_1\)</span> 开始前就提交了，这就不是环）。</p>
+<ul>
+<li><strong>Commit Ordering 优化:</strong> 只有当 <span class="arithmatex">\(T_3\)</span> 提交时间早于 <span class="arithmatex">\(T_1\)</span> 的快照时间时，才构不成环。我们利用这个规则减少 Abort 率。</li>
+<li><strong>Safe Retry:</strong> 当必须 Abort 时，我们倾向于 Abort <span class="arithmatex">\(T_2\)</span> (Pivot)。因为 <span class="arithmatex">\(T_2\)</span> 重试时，原先的 <span class="arithmatex">\(T_3\)</span> 已经提交，新的依赖关系会变成 <code>wr</code> (可见读) 而不是 <code>rw</code>，从而打破死循环。</li>
+</ul>
+<h2 id="5">5. 针对只读事务的优化</h2>
+<p>只读事务在 SI 下也会读到异常数据（如 Report 生成），因此必须纳入 SSI 管理。但我们不想让它们承担太重开销。</p>
+<h3 id="51-safe-snapshots">5.1 Safe Snapshots (安全快照)</h3>
+<p><strong>理论：</strong> 如果在只读事务 <span class="arithmatex">\(T_{ro}\)</span> 的生命周期内，没有任何并发读写事务提交了“指向旧事务的 rw 出边”，那么 <span class="arithmatex">\(T_{ro}\)</span> 是绝对安全的。</p>
+<p><strong>实现：</strong></p>
+<ol>
+<li>只读事务启动时，记录当前所有并发的读写事务列表。</li>
+<li>当这些并发事务全部提交后，如果没有发现上述冲突，标记该快照为 <strong>Safe</strong>。</li>
+<li><strong>收益：</strong> Safe 的只读事务可以<strong>丢弃所有 SIREAD Locks</strong>，且后续读操作不再加锁。这极大减轻了锁表压力。</li>
+</ol>
+<h3 id="52-deferrable-transactions">5.2 Deferrable Transactions</h3>
+<p>SQL</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE READ ONLY DEFERRABLE;
+</span></code></pre></div>
+<p>对于 <code>pg_dump</code> 这种超长只读事务，Abort 代价太高。</p>
+<p><strong>逻辑：</strong> 事务启动时不立即执行，而是 <strong>Block</strong>。直到系统确信当前快照已变为 Safe Snapshot 才放行。</p>
+<p><strong>代价：</strong> 启动延迟（通常几秒），换取运行时的绝对安全和零 SSI 开销。</p>
+<h2 id="6">6. 性能总结</h2>
+<p>根据 benchmark 数据：</p>
+<ul>
+<li><strong>读多写少 (Read-Heavy):</strong> SSI 的性能损耗非常小（&lt; 10%），TPS 远高于 S2PL。</li>
+<li><strong>写冲突激烈 (High Contention):</strong> 性能会下降，因为 Abort 率上升。</li>
+<li><strong>CPU Overhead:</strong> 主要来自 SSI Lock Manager 的维护和依赖图遍历，而非锁竞争。</li>
+</ul>
+<h2 id="7">7. 总结</h2>
+<p>PostgreSQL 的 SSI 实现是学术理论与工程实现的完美结合。它没有选择笨重的 S2PL，而是通过：</p>
+<ol>
+<li><strong>精确的理论模型</strong>（检测双 rw 边）。</li>
+<li><strong>巧妙的工程妥协</strong>（内存有界化、粒度提升）。</li>
+<li><strong>针对性的优化</strong>（Safe Snapshots）。</li>
+</ol>
+<p>在保证严格串行化的同时，最大程度保留了 MVCC "读不阻塞写" 的核心优势。后续我们将结合代码 (<code>predicate.c</code>) 详细分析其锁清理机制。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

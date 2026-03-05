@@ -1,0 +1,2971 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mobilephone724.github.io/notes/0031-learn_rust/0033-haffman-compress/">
+      
+      
+        <link rel="prev" href="../0032-bstree/">
+      
+      
+        <link rel="next" href="../../2026-01-10-llm-cousre/2026-01-10-1-how-transformers-work/2026-01-10-1-how-transformers-work/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Experience with Huffman Compression - mobilephone724</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#experience-with-huffman-compression" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="mobilephone724" class="md-header__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mobilephone724
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Experience with Huffman Compression
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mobilephone724" class="md-nav__button md-logo" aria-label="mobilephone724" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mobilephone724
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0000 computer science
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0000 computer science
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0001-database-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Knowledge of Database Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0002-fwrapv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    "-fwrapv" option in gcc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0005-howToKnowWhoseIsBigger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alice and Bob how to know whose number is bigger without giving away their own's
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0006-linux-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    APUE/Chapter3: file and I/O
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0007-zero2rsa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ZERO TO RSA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0008-reversed_inode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Number of Reversed Inode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0009-cublasdgemmtutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cublasDgemm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0029-link-time-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    conception
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0000-computer_science/0030-intro-to-io-uring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction To IO_URING
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0010 paper reading
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0010 paper reading
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0003-google-f1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read Google F1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0011-roaring-bitmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    roaring bitmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0012-mesi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MESI AND MEMORY_BARRIER: paper reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0026-20years-database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What happened in the last two decades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0027-constant_recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constant recovery with undo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0010-paper_reading/0033-ssi-in-pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0033 ssi in pg
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0013 postgresql
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0013 postgresql
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0013-build_from_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build PostgreSQL From Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0014-column-schema-change/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Column Schema Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0015-every_data_pg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Everyday PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0016-hashjoin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hash join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0017-pgvector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PGVECTOR AND VECTOR DATABASE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0018-sequence_type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_squeence_type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0019-ssl-in-PG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSL in PG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0028-pg_repack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pg_repack
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0020 slru
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0020 slru
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0020-slru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SLRU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0020-slru/0021-clog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLOG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0022 wal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0022 wal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0022-wal-basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL基础
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0022-wal/0023-wal-insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WAL日志的插入
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0024 index in pg
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0024 index in pg
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../0013-postgresql/0024-index-in-pg/0025-hot-and-create-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 概述
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0031 learn rust
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    0031 learn rust
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0032-bstree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0032:Rust 中的二叉搜索树
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Experience with Huffman Compression
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Experience with Huffman Compression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitvec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BitVec
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BitVec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#iter-in-bitvec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter in BitVec
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-encapsulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        type encapsulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#belows-are-from-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Belows are from AI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-report-on-huffman-compression-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Report on Huffman Compression Module
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Report on Huffman Compression Module">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-algorithm-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Algorithm Principle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-code-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Code Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Code Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#high-level-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rust-featured-low-level-code-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rust-Featured Low-Level Code Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-vec-and-bitvec-and-their-iters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Vec and BitVec and Their Iters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-complex-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Complex Statements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 llm cousre
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 10 llm cousre
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 1 how transformers work
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 10 1 how transformers work
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-10-1-how-transformers-work/2026-01-10-1-how-transformers-work/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 1 how transformers work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 11:56:52 how transformers solve tasks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 10 11:56:52 how transformers solve tasks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-10-11%3A56%3A52-how-transformers-solve-tasks/2026-01-10-11%3A56%3A52-how-transformers-solve-tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 10 11:56:52 how transformers solve tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 26 21:27:37 Transformer Architectures
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 26 21:27:37 Transformer Architectures
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-26-21%3A27%3A37-Transformer-Architectures/2026-01-26-21%3A27%3A37-Transformer-Architectures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 26 21:27:37 Transformer Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_4" id="__nav_6_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 09:22:39 inference with llms
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 31 09:22:39 inference with llms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-31-09%3A22%3A39-inference_with_llms/2026-01-31-09%3A22%3A39-inference_with_llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 09:22:39 inference with llms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 10:36:39 kvcache
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 01 31 10:36:39 kvcache
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-01-31-10%3A36%3A39-kvcache/2026-01-31-10%3A36%3A39-kvcache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 01 31 10:36:39 kvcache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:37:21 bias
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 02 01 09:37:21 bias
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-02-01-09%3A37%3A21-bias/2026-02-01-09%3A37%3A21-bias/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:37:21 bias
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:46:39 behind the pipeline
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 02 01 09:46:39 behind the pipeline
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-02-01-09%3A46%3A39-behind_the_pipeline/2026-02-01-09%3A46%3A39-behind_the_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:46:39 behind the pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:57:21 uv commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2026 02 01 09:57:21 uv commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2026-01-10-llm-cousre/2026-02-01-09%3A57%3A21-uv_commands/2026-02-01-09%3A57%3A21-uv_commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026 02 01 09:57:21 uv commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitvec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BitVec
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BitVec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#iter-in-bitvec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter in BitVec
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-encapsulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        type encapsulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#belows-are-from-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Belows are from AI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-report-on-huffman-compression-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Report on Huffman Compression Module
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Report on Huffman Compression Module">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-algorithm-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Algorithm Principle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-code-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Code Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Code Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#high-level-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rust-featured-low-level-code-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rust-Featured Low-Level Code Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-vec-and-bitvec-and-their-iters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Vec and BitVec and Their Iters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-complex-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Complex Statements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="experience-with-huffman-compression">Experience with Huffman Compression</h1>
+<p>ON GOING</p>
+<h2 id="introduction">Introduction</h2>
+<p>This is the second rust repo I wrote to practice rust. It is far more different
+from bstree and While finishing it, I know more features of rust.</p>
+<h2 id="bitvec">BitVec</h2>
+<p>Everytime it think of something like <code>BitVec</code>, I will think of the <code>std::vector&lt;bool&gt;</code> in C++. But <code>std::vector&lt;bool&gt;</code> is a very BAD design. Fortunately, Rust doesn't do that. See the related discussion <a href="https://users.rust-lang.org/t/is-vec-bool-compiled-to-bit-vector-32-bool-32bits/58540">here</a>.</p>
+<p>So in rust, we have <code>BitVec</code>, so that we can store bits more conveniently. While <code>BitVec</code> is quite a complex data structure, especially when you try to traverse it.</p>
+<h3 id="iter-in-bitvec">iter in BitVec</h3>
+<p><code>pub fn iter(&amp;self) -&gt; Iter&lt;'_, u8, Msb0&gt;</code></p>
+<h2 id="type-encapsulation">type encapsulation</h2>
+<p>While I try to use <code>BitVec&lt;u8, Msb0&gt;;</code> to represent a compressed value, I code it as below subconsciously:</p>
+<div class="language-rust highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">type</span><span class="w"> </span><span class="nc">CompressedContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BitVec</span><span class="o">&lt;</span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="n">Msb0</span><span class="o">&gt;</span><span class="p">;</span>
+</span></code></pre></div>
+<p>But it isn't a good idea here. This means that <strong>I can't implement more functions on this type</strong>, while <code>BitVec</code> itself doesn't have a <code>Copy</code> trait. </p>
+<p>To handle this issue, I use another method as below:</p>
+<div class="language-rust highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HaffmanCompressedCode</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">val</span><span class="p">:</span><span class="w"> </span><span class="nc">BitVec</span><span class="o">&lt;</span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="n">Msb0</span><span class="o">&gt;</span><span class="p">,</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>However, this approach introduces additional complexity, as I need to implement several traits manually for use with <code>HashMap</code>. Fortunately, Rust's <code>derive</code> attribute simplifies this since <code>BitVec</code> already implements all the required traits.</p>
+<div class="language-rust highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#[derive(Clone, PartialEq, Eq, Hash)]</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HaffmanCompressedCode</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">val</span><span class="p">:</span><span class="w"> </span><span class="nc">BitVec</span><span class="o">&lt;</span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="n">Msb0</span><span class="o">&gt;</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Note that not all attributes can be derived.  From <a href="https://doc.rust-lang.org/rust-by-example/trait/derive.html">official doc</a></p>
+<blockquote>
+<p>The following is a list of derivable traits:</p>
+<ul>
+<li>Comparison traits: <a href="https://doc.rust-lang.org/std/cmp/trait.Eq.html"><code>Eq</code></a>, <a href="https://doc.rust-lang.org/std/cmp/trait.PartialEq.html"><code>PartialEq</code></a>, <a href="https://doc.rust-lang.org/std/cmp/trait.Ord.html"><code>Ord</code></a>, <a href="https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html"><code>PartialOrd</code></a>.</li>
+<li><a href="https://doc.rust-lang.org/std/clone/trait.Clone.html"><code>Clone</code></a>, to create <code>T</code> from <code>&amp;T</code> via a copy.</li>
+<li><a href="https://doc.rust-lang.org/core/marker/trait.Copy.html"><code>Copy</code></a>, to give a type 'copy semantics' instead of 'move semantics'.</li>
+<li><a href="https://doc.rust-lang.org/std/hash/trait.Hash.html"><code>Hash</code></a>, to compute a hash from <code>&amp;T</code>.</li>
+<li><a href="https://doc.rust-lang.org/std/default/trait.Default.html"><code>Default</code></a>, to create an empty instance of a data type.</li>
+<li><a href="https://doc.rust-lang.org/std/fmt/trait.Debug.html"><code>Debug</code></a>, to format a value using the <code>{:?}</code> formatter.</li>
+</ul>
+</blockquote>
+<h2 id="file-operation">File operation</h2>
+<p>read u8 into u64 and <code>Vec&lt;u64&gt;</code></p>
+<h2 id="belows-are-from-ai">Belows are from AI</h2>
+<h2 id="technical-report-on-huffman-compression-module">Technical Report on Huffman Compression Module</h2>
+<h3 id="1-algorithm-principle">1. Algorithm Principle</h3>
+<p>Huffman coding is a lossless data compression algorithm that assigns variable-length codes to input characters, with shorter codes for more frequent characters. The algorithm builds a binary tree (Huffman tree) where each leaf node represents a character, and the path from root to leaf determines the code (0 for left, 1 for right). The tree is constructed by repeatedly combining the two nodes with the lowest frequencies until one root remains.</p>
+<p>In this implementation:
+- Frequencies of each byte (0-255) are counted.
+- A priority queue (BinaryHeap) is used to build the tree, with lower frequency nodes having higher priority.
+- Codes are generated by traversing the tree.
+- Compression replaces each byte with its Huffman code, packed into bytes.
+- Decompression reads bits and traverses the tree to reconstruct bytes.</p>
+<p>The compressed data includes a header with frequencies (256 * 8 bytes) and the bit length (8 bytes), followed by the compressed content.</p>
+<h3 id="2-code-design">2. Code Design</h3>
+<h4 id="high-level-design">High-Level Design</h4>
+<p>The module is structured into four main sections:
+- <strong>Tree Node and Tree</strong>: <code>HuffmanTreeNode</code> and <code>HuffmanTree</code> for building the Huffman tree.
+- <strong>Compressed Code</strong>: <code>HuffmanCompressedCode</code> using <code>BitVec&lt;u8, Msb0&gt;</code> for bit-level operations.
+- <strong>Bidirectional Map</strong>: <code>HuffmanMap</code> with <code>HashMap</code>s for byte-to-code and code-to-byte mappings.
+- <strong>Public API</strong>: <code>compress</code> and <code>decompress</code> functions, plus file I/O wrappers.</p>
+<p>The design separates concerns: tree building, code generation, mapping, and I/O. It uses Rust's ownership and borrowing for safety, with no unsafe code.</p>
+<h4 id="rust-featured-low-level-code-design">Rust-Featured Low-Level Code Design</h4>
+<ul>
+<li><strong>Error Handling</strong>: Custom <code>HuffmanError</code> enum with variants for different error types (InvalidInput, TreeBuildError, etc.), implementing <code>std::error::Error</code>. This provides type-safe, descriptive errors instead of strings. <code>FileCompressError</code> wraps I/O and Huffman errors.</li>
+<li><strong>Generics and Traits</strong>: <code>HuffmanTreeNode</code> derives <code>Eq</code>, <code>PartialEq</code>, <code>Ord</code>, <code>PartialOrd</code> for heap ordering. <code>HuffmanCompressedCode</code> derives <code>Clone</code>, <code>PartialEq</code>, <code>Eq</code>, <code>Hash</code> for use in <code>HashMap</code>.</li>
+<li><strong>Memory Management</strong>: Uses <code>Box</code> for tree nodes to avoid stack overflows. <code>BitVec</code> for efficient bit manipulation. Vectors and hashmaps for dynamic storage.</li>
+<li><strong>Iterators</strong>: Custom <code>iter()</code> method on <code>HuffmanCompressedCode</code> returns <code>bitvec::slice::Iter</code>, allowing iteration over bits.</li>
+<li><strong>Type Safety</strong>: Strong typing with custom types like <code>HuffmanFrequency</code> (array of 256 u64s). Functions use <code>Result&lt;T, HuffmanError&gt;</code> for error propagation.</li>
+<li><strong>Performance</strong>: BinaryHeap for O(log n) insertions. HashMap for O(1) lookups. Bit-packing minimizes space.</li>
+</ul>
+<h3 id="3-vec-and-bitvec-and-their-iters">3. Vec and BitVec and Their Iters</h3>
+<ul>
+<li><strong>Vec<u8></strong>: Used for byte sequences (input/output data, compressed result). Provides dynamic sizing, efficient appends (<code>extend_from_slice</code>), and indexing. Iterators: <code>iter()</code> for borrowing iteration, <code>into_iter()</code> for consuming.</li>
+<li><strong>BitVec<u8, Msb0></strong>: From the <code>bitvec</code> crate, stores bits in bytes with MSB-first ordering. Used in <code>HuffmanCompressedCode</code> for variable-length codes. Supports bit-level operations like <code>push(bool)</code>, <code>clear()</code>. Iterator: <code>iter()</code> returns <code>bitvec::slice::Iter&lt;'_, u8, Msb0&gt;</code>, yielding <code>bool</code> values for each bit.</li>
+<li><strong>Iterators Usage</strong>: In compression, <code>compressed_code.val.iter()</code> loops over bits to pack into bytes. In decompression, <code>BitVec::from_element(ch).iter()</code> extracts bits from a byte. This allows precise bit manipulation without manual bit shifting.</li>
+</ul>
+<h3 id="4-complex-statements">4. Complex Statements</h3>
+<ul>
+<li><strong>Tree Building Loop</strong>: <code>while tree.len() &gt;= 2 { let Some(n1) = tree.pop() else { ... }; ... }</code> - Uses <code>if let</code> pattern matching for safe unwrapping from heap, ensuring tree construction.</li>
+<li><strong>Bit Packing in Compress</strong>: <code>if *bit { byte |= 1 &lt;&lt; (7 - filled); }</code> - Packs bits into bytes using MSB0, with <code>filled</code> counter for byte boundaries.</li>
+<li><strong>Decompression Bit Reading</strong>: <code>for (i, b) in bits.iter().enumerate() { if (i as u64) &gt;= remain { break; } compressed_code.push(*b); if let Some(val) = dic.get(&amp;compressed_code) { ... } }</code> - Reads bits up to <code>remain</code>, accumulates in <code>compressed_code</code>, checks dictionary on each bit for prefix matching.</li>
+<li><strong>Frequency Parsing</strong>: <code>frequency[i] = u64::from_le_bytes(chunk.try_into().unwrap());</code> - Assumes valid chunks, uses <code>try_into()</code> for array conversion, <code>from_le_bytes</code> for endianness.</li>
+</ul>
+<p>The refactored code is now more robust, with better error handling, documentation, and adherence to Rust idioms, ready for production use. All tests pass.</p>
+<p>Made changes.</p>
+<h1 id="understanding-the-custom-error-handling-in-huffman_compressrs">Understanding the Custom Error Handling in <code>huffman_compress.rs</code></h1>
+<p>This document explains the custom error handling system implemented in <code>huffman_compress.rs</code>. It's designed for beginners in Rust to understand how to create and use custom error types.</p>
+<h2 id="the-problem-handling-different-kinds-of-errors">The Problem: Handling Different Kinds of Errors</h2>
+<p>In the <code>file_compress</code> function, we can encounter at least two different types of errors:
+1.  <strong>I/O Errors:</strong> These happen when reading from or writing to a file (e.g., file not found, permission denied). These are of type <code>std::io::Error</code>.
+2.  <strong>Internal Compression Errors:</strong> Our <code>compress</code> function can fail for its own reasons, and it signals this by returning an error of type <code>String</code>.</p>
+<p>A function in Rust can only return one error type. To handle both <code>std::io::Error</code> and <code>String</code> from <code>file_compress</code>, we need to create a new, unified error type that can represent either kind of error.</p>
+<h2 id="the-solution-a-custom-error-enum">The Solution: A Custom Error Enum</h2>
+<p>Here is the code for our custom error system. We'll go through it line by line.</p>
+<h3 id="1-the-filecompresserror-enum">1. The <code>FileCompressError</code> Enum</h3>
+<div class="language-rust highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#[derive(Debug)]</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">pub</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="nc">FileCompressError</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">Io</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">Error</span><span class="p">),</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">Internal</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">}</span>
+</span></code></pre></div>
+<ul>
+<li><code>pub enum FileCompressError</code>: This declares a new public enumeration (enum) named <code>FileCompressError</code>. An enum is a type that can be one of several different variants.</li>
+<li><code>Io(std::io::Error)</code>: This is the first variant, named <code>Io</code>. It holds a <code>std::io::Error</code> value. We'll use this variant to wrap any I/O errors that occur.</li>
+<li><code>Internal(String)</code>: This is the second variant, named <code>Internal</code>. It holds a <code>String</code>. We'll use this to wrap the errors from our <code>compress</code> logic.</li>
+<li><code>#[derive(Debug)]</code>: This is an attribute that automatically implements the <code>Debug</code> trait for our enum. This allows us to print the error for debugging purposes (e.g., using <code>println!("{:?}", my_error);</code>).</li>
+</ul>
+<p><strong>Why?</strong> This enum acts as a container. An instance of <code>FileCompressError</code> will either be an <code>Io</code> error or an <code>Internal</code> error, allowing us to have a single, consistent error type for our function.</p>
+<h3 id="2-implementing-display-for-pretty-printing">2. Implementing <code>Display</code> for Pretty Printing</h3>
+<p><div class="language-rust highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">impl</span><span class="w"> </span><span class="n">fmt</span><span class="p">::</span><span class="n">Display</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">FileCompressError</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">fmt</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">fmt</span><span class="p">::</span><span class="n">Formatter</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">fmt</span><span class="p">::</span><span class="nb">Result</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="o">*</span><span class="bp">self</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">            </span><span class="n">FileCompressError</span><span class="p">::</span><span class="n">Io</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">err</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;IO error: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">err</span><span class="p">),</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">            </span><span class="n">FileCompressError</span><span class="p">::</span><span class="n">Internal</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">err</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Internal error: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">err</span><span class="p">),</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">}</span>
+</span></code></pre></div>
+-   <code>impl fmt::Display for FileCompressError</code>: This block implements the <code>Display</code> trait from the <code>std::fmt</code> module for our <code>FileCompressError</code> enum. The <code>Display</code> trait is used for user-facing, formatted output, like when you print an error message to the console.
+-   <code>fn fmt(...)</code>: This is the required function for the <code>Display</code> trait. It defines how a <code>FileCompressError</code> value should be converted to a string.
+-   <code>match *self</code>: We use a <code>match</code> statement to check which variant of the enum we have.
+-   <code>FileCompressError::Io(ref err) =&gt; ...</code>: If it's an <code>Io</code> variant, we get a reference (<code>ref</code>) to the inner <code>std::io::Error</code> and format it with a "IO error: " prefix. The <code>{}</code> in the <code>write!</code> macro will use the <code>Display</code> implementation of <code>std::io::Error</code>.
+-   <code>FileCompressError::Internal(ref err) =&gt; ...</code>: Similarly, if it's an <code>Internal</code> variant, we format the inner <code>String</code> with an "Internal error: " prefix.</p>
+<p><strong>Why?</strong> This allows us to easily print our custom error in a human-readable way (e.g., <code>println!("{}", my_error);</code>). It's a standard practice for all error types.</p>
+<h3 id="3-implementing-the-error-trait">3. Implementing the <code>Error</code> Trait</h3>
+<p><div class="language-rust highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">impl</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">FileCompressError</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">source</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;&amp;</span><span class="p">(</span><span class="k">dyn</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">&#39;</span><span class="nb">static</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="o">*</span><span class="bp">self</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">            </span><span class="n">FileCompressError</span><span class="p">::</span><span class="n">Io</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">err</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">err</span><span class="p">),</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">            </span><span class="n">FileCompressError</span><span class="p">::</span><span class="n">Internal</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">None</span><span class="p">,</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">}</span>
+</span></code></pre></div>
+-   <code>impl Error for FileCompressError</code>: This implements the standard <code>Error</code> trait from <code>std::error</code>. This is the most important trait for error types in Rust. It marks our type as a standard error, allowing it to interoperate with other libraries and tools.
+-   <code>fn source(&amp;self) -&gt; ...</code>: This is an optional method in the <code>Error</code> trait. It should return the "source" or "cause" of the error, if there is one. This is useful for creating a chain of errors.
+-   <code>FileCompressError::Io(ref err) =&gt; Some(err)</code>: For our <code>Io</code> variant, the underlying cause is the original <code>std::io::Error</code>. So we return it. This allows someone to inspect the chain of errors.
+-   <code>FileCompressError::Internal(_) =&gt; None</code>: Our <code>Internal</code> variant holds a <code>String</code>. Since <code>String</code> itself doesn't implement the <code>Error</code> trait, it can't be an error source. So, we return <code>None</code>.</p>
+<p><strong>Why?</strong> Implementing <code>Error</code> is the idiomatic way to create an error type in Rust. It signals to other parts of the Rust ecosystem that our type represents an error and allows for things like error chaining.</p>
+<h3 id="4-automatic-conversion-with-from">4. Automatic Conversion with <code>From</code></h3>
+<div class="language-rust highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">impl</span><span class="w"> </span><span class="nb">From</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">FileCompressError</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">from</span><span class="p">(</span><span class="n">err</span><span class="p">:</span><span class="w"> </span><span class="nc">std</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">Error</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">        </span><span class="n">FileCompressError</span><span class="p">::</span><span class="n">Io</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">}</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">impl</span><span class="w"> </span><span class="nb">From</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">FileCompressError</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">from</span><span class="p">(</span><span class="n">err</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">        </span><span class="n">FileCompressError</span><span class="p">::</span><span class="n">Internal</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">}</span>
+</span></code></pre></div>
+<ul>
+<li><code>impl From&lt;T&gt; for U</code>: These blocks implement the <code>From</code> trait. This trait provides a way to convert a value of one type into another.</li>
+<li>The first block says: "Here is how you convert (<code>From</code>) a <code>std::io::Error</code> into (<code>for</code>) a <code>FileCompressError</code>." The implementation simply wraps the <code>io::Error</code> in our <code>Io</code> variant.</li>
+<li>The second block does the same for <code>String</code>, wrapping it in our <code>Internal</code> variant.</li>
+</ul>
+<p><strong>Why?</strong> This is the magic that makes the <code>?</code> operator work seamlessly. When you use <code>?</code> on a <code>Result</code> that might contain a <code>std::io::Error</code>, Rust sees that the function needs to return a <code>FileCompressError</code>. It then looks for an <code>impl From&lt;std::io::Error&gt; for FileCompressError</code> to perform the conversion automatically. The same happens for the <code>String</code> error type. This keeps our code clean and avoids manual <code>match</code> statements for error handling.</p>
+<h3 id="5-the-updated-file_compress-function">5. The Updated <code>file_compress</code> Function</h3>
+<p><div class="language-rust highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">file_compress</span><span class="p">(</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="n">file_in_path</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="n">file_out_path</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="n">FileCompressError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">file_in</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OpenOptions</span><span class="p">::</span><span class="n">new</span><span class="p">().</span><span class="n">read</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="n">open</span><span class="p">(</span><span class="n">file_in_path</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">contents</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="n">file_in</span><span class="p">.</span><span class="n">read_to_end</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">contents</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">compressed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compress</span><span class="p">(</span><span class="o">&amp;</span><span class="n">contents</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">file_out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">::</span><span class="n">create</span><span class="p">(</span><span class="n">file_out_path</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span><span class="n">file_out</span><span class="p">.</span><span class="n">write_all</span><span class="p">(</span><span class="o">&amp;</span><span class="n">compressed</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="p">}</span>
+</span></code></pre></div>
+-   <code>-&gt; Result&lt;(), FileCompressError&gt;</code>: The function's return type is now a <code>Result</code> where the error variant is our new <code>FileCompressError</code>.
+-   <code>...open(file_in_path)?</code>: <code>open</code> returns a <code>Result&lt;File, std::io::Error&gt;</code>. If it's an error, the <code>?</code> operator will automatically convert the <code>std::io::Error</code> into a <code>FileCompressError::Io</code> (using our <code>From</code> implementation) and return it from the function.
+-   <code>...read_to_end(&amp;mut contents)?</code>: Same as above.
+-   <code>compress(&amp;contents)?</code>: <code>compress</code> returns a <code>Result&lt;Vec&lt;u8&gt;, String&gt;</code>. If it's an error, <code>?</code> will convert the <code>String</code> into a <code>FileCompressError::Internal</code> (using our other <code>From</code> implementation) and return from the function.</p>
+<p><strong>Why?</strong> The function is now much cleaner. We've removed the manual error mapping (<code>.map_err(...)</code>) and can use <code>?</code> on any function that returns a <code>Result</code> with an error type that can be converted into our <code>FileCompressError</code>. This makes the code more readable and maintainable.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.expand", "navigation.indexes", "content.math"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
